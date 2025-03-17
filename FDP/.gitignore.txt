@@ -1,2 +1,2 @@
 *
-!/FDP/FDP.srcs
+!/FDP.srcs/
