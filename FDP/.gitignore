@@ -1,0 +1,22 @@
+# Ignore unnecessary Vivado-generated files
+*.log
+*.jou
+*.str
+*.cache/
+*.hw/
+*.hwh
+*.ip_user_files/
+*.gen/
+*.runs/
+*.sim/
+*.tmp/
+*.xsim/
+*.dcp
+*.xpr  # The Vivado project file (not needed if using Tcl)
+*.wcfg
+*.txt
+*.coe
+FDP.srcs/sources_1/ip/*
+
+# Ignore auto-generated files
+*.backup.*
