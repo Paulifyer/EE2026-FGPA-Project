@@ -26,6 +26,8 @@ module Top_Student (
     output vsync
 );
 
+  import Data_Item::*;
+
   parameter Task_4D_pw = (1 << 15) | (1 << 8) | (1 << 7) | (1 << 5) | (1 << 3) | (1 << 1) | (1 << 0);
 
   wire clk_6p25MHz, clk_1ms, segClk;

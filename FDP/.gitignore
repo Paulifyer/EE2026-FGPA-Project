@@ -11,8 +11,8 @@
 *.sim/
 *.tmp/
 *.xsim/
-*.dcp
-*.xpr  # The Vivado project file (not needed if using Tcl)
+#*.dcp
+#*.xpr  # The Vivado project file (not needed if using Tcl)
 *.wcfg
 *.txt
 *.coe
