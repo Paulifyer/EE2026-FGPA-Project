@@ -46,8 +46,8 @@ module is_collision (
     is_collision = wall_tiles[y_new*width+x_new];
     is_edge = (x_new < 0) || (x_new >= width) || (y_new < 0) || (y_new == height);
 
-    x_out = en ? (is_collision || is_edge) ? x_cur : x_new : x_cur;
-    y_out = en ? (is_collision || is_edge) ? y_cur : y_new : x_cur;
+    x_out = en ? ((is_collision || is_edge) ? x_cur : x_new) : x_cur;
+    y_out = en ? ((is_collision || is_edge) ? y_cur : y_new) : x_cur;
   end
 
 

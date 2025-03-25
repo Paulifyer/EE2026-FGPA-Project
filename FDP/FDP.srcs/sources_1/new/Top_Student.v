@@ -63,8 +63,8 @@ module Top_Student (
   
   MainMenu menu (
     pixel_index, 
-    halfSecClock, 
-    state, 
+    clkOneSec,
+    state,
     oled_data_menu
   );
 

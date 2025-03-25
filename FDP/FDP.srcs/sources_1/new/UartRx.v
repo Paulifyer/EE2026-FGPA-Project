@@ -61,4 +61,5 @@ module UartRx(
         end else
             valid <= 1'b0;
     end
+    
 endmodule

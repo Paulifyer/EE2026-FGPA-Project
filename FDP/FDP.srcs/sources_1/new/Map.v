@@ -8,6 +8,7 @@ module Map (
     btnR,
     btnC,
     en,
+    input [1:0] JA, //for UART 
     input [12:0] pixel_index,
     input [95:0] wall_tiles,
     output [15:0] pixel_data
@@ -52,7 +53,7 @@ module Map (
 
   slow_clock c1 (
       .clk(clk),
-      .period(1_0000_0000),
+      .period(1_000_000),
       .slow_clock(clk1p0)
   );
 
@@ -87,6 +88,14 @@ module Map (
       .x_out(newYellowXTile),
       .y_out(newYellowYTile)
   );
+  
+  //UART TRANSMISSION
+    reg tx_start, rx_receiving;
+    reg [15:0] data;
+    wire busy;
+    UartTx send (clk, tx_start, rx_receiving, data, JA[0], busy);
+    
+    
 
   // Initialization block           
   initial begin
@@ -104,7 +113,10 @@ module Map (
 
   // Clock division and input processing
   always @(posedge clk) begin
-    green_move <= en ? (btnU ? 1 : (btnR ? 2 : (btnD ? 3 : (btnL ? 4 : 0)))) : 0;
+    green_move <= en ? (btnU ? 1 :
+                       (btnR ? 2 : 
+                       (btnD ? 3 : 
+                       (btnL ? 4 : 0)))) : 0;
 
     dropBomb <= en ? (bomb_countdown == 10) ? 0 : dropBomb | btnC : 0;
 
@@ -118,13 +130,18 @@ module Map (
     end
   end
 
-  always @(posedge clk1p0) begin
+  always @(posedge clk1p0) begin //Movement Processing
     random_seed <= {
         random_seed[14:0], random_seed[15] ^ random_seed[13] ^ random_seed[12] ^ random_seed[10]
       };
+    if (en && greenXTile != newGreenXTile && 
+        greenYTile != newGreenYTile && ~busy) begin  
+        data[15:13] = 3'b001;
+        data[12:0] = newGreenYTile * 12 + newGreenXTile;
+    end
     greenXTile <= en ? newGreenXTile : GREEN_X_TILE;
     greenYTile <= en ? newGreenYTile : GREEN_Y_TILE;
-
+     
     yellowXTile <= en ? newYellowXTile : YELLOW_X_TILE;
     yellowYTile <= en ? newYellowYTile : YELLOW_Y_TILE;
 
