@@ -4,24 +4,24 @@ module drawCordinate (
     input  [12:0] cordinateIndex,
     input  [ 7:0] greenX,
     input  [ 7:0] greenY,
-    input  [ 7:0] yellowX,          // added yellowX input
-    input  [ 7:0] yellowY,          // added yellowY input
+    input  [ 7:0] yellowX,
+    input  [ 7:0] yellowY,
     input  [95:0] wall_tiles,
     input  [95:0] breakable_tiles,
     input  [95:0] bomb_tiles,
     output [15:0] oledColour
 );
 
-  parameter black = 16'h0000;
-  parameter red = 16'hF800;
-  parameter white = 16'hFFFF;
-  parameter green = 16'h07E0;
-  parameter blue = 16'h001F;
-  parameter yellow = 16'hFFE0;  // new yellow color
+  parameter black  = 16'h0000;
+  parameter red    = 16'hF800;
+  parameter white  = 16'hFFFF;
+  parameter green  = 16'h07E0;
+  parameter blue   = 16'h001F;
+  parameter yellow = 16'hFFE0;
 
-  parameter TILE_WIDTH = 8;  // 96/12 = 8 pixels per tile width
+  parameter TILE_WIDTH  = 8;  // 96/12 = 8 pixels per tile width
   parameter TILE_HEIGHT = 8;  // 64/8 = 8 pixels per tile height
-  parameter GRID_WIDTH = 12;
+  parameter GRID_WIDTH  = 12;
   parameter GRID_HEIGHT = 8;
 
   wire [15:0] greenSquareColour;

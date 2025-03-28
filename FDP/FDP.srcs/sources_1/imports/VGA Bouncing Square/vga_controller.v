@@ -19,7 +19,7 @@
 //////////////////////////////////////////////////////////////////////////////////
 
 module vga_controller(
-    input clk_100MHz,   // from Basys 3
+    input clk,   // from Basys 3
     input reset,        // system reset
     output video_on,    // ON while pixel counts for x and y and within display area
     output hsync,       // horizontal sync
@@ -47,7 +47,7 @@ module vga_controller(
 	reg  [1:0] r_25MHz;
 	wire w_25MHz;
 	
-	always @(posedge clk_100MHz or posedge reset)
+	always @(posedge clk or posedge reset)
 		if(reset)
 		  r_25MHz <= 0;
 		else
@@ -65,7 +65,7 @@ module vga_controller(
     wire v_sync_next, h_sync_next;
     
     // Register Control
-    always @(posedge clk_100MHz or posedge reset)
+    always @(posedge clk or posedge reset)
         if(reset) begin
             v_count_reg <= 0;
             h_count_reg <= 0;

@@ -29,9 +29,9 @@ module Top_Student (
 
   import Data_Item::*;
 
-
   wire clk_6p25MHz, clk_1ms, segClk;
-  wire clkOneSec; wire state; //Ethan : stuff for the menu
+  wire clkOneSec;
+  wire state;  //Ethan : stuff for the menu
   wire frame_begin, sending_pixels, sample_pixel;
   wire [12:0] pixel_index;
   wire [15:0] oled_data, oled_game_map, oled_data_menu;
@@ -54,7 +54,7 @@ module Top_Student (
       clk,
       clkOneSec
   );
-  
+
   clock_generator_freq #(1000) c4 (
       clk,
       clk_1ms
@@ -68,19 +68,19 @@ module Top_Student (
   );
 
   StateManager sM (
-    btnC, 
-    clk, 
-    state
+      btnC,
+      clk,
+      state
   );
-  
+
   MainMenu menu (
-    pixel_index, 
-    halfSecClock, 
-    state, 
-    oled_data_menu
+      pixel_index,
+      halfSecClock,
+      state,
+      oled_data_menu
   );
-  
-  
+    
+
   Oled_Display d1 (
       clk_6p25MHz,
       0,
@@ -103,7 +103,7 @@ module Top_Student (
       state,
       score
   );
-  
+
   Map map (
       .clk(clk),
       .btnD(btnD),
@@ -113,14 +113,14 @@ module Top_Student (
       .btnC(btnC),
       .en(state),
       .wall_tiles(wall_tiles),
-        .breakable_tiles(breakable_tiles),
+      .breakable_tiles(breakable_tiles),
       .pixel_index(pixel_index),
       .pixel_data(oled_game_map)
   );
-  
+
 
   OLED_to_VGA game_to_vga (
-      .clk_100MHz(clk),
+      .clk(clk),
       .pixel_data(oled_data),
       .score(score),
       .pixel_index(pixel_index),
