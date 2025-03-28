@@ -19,9 +19,12 @@ module Top_Student (
     btnD,
     JCIn,
     input [15:0] sw,
+    input PS2Data,
+    input PS2Clk,
     output [7:0] JB,
     output [11:0] rgb,
     output [7:0] seg,
+    output [15:0] led,
     output [3:0] an,
     output hsync,
     output vsync
@@ -38,12 +41,19 @@ module Top_Student (
   wire [95:0] wall_tiles;
   wire [95:0] breakable_tiles;
 
-  reg [15:0] score;
+  reg  [15:0] score;
+  reg  [7:0] current_key;
+
+//   assign led = current_key;
+    assign led = 16'hFFFF;
+
+  wire key_W, key_A, key_S, key_D, key_B, key_ENTER;
 
   // generte wall tiles 1 for wall 0 for no wall sparese
   assign wall_tiles = 96'h000000000000F0000F000000;
   assign breakable_tiles = 96'h0000000000000000000000FF;
 
+  // CLOCK GENERATOR
   slow_clock c1 (
       clk,
       16,
@@ -60,6 +70,19 @@ module Top_Student (
       clk_1ms
   );
 
+  keyboard k1 (
+      .clk(clk),
+      .PS2Data(PS2Data),
+      .PS2Clk(PS2Clk),
+        .pressed_key(current_key),
+      .key_W(key_W),
+      .key_A(key_A),
+      .key_S(key_S),
+      .key_D(key_D),
+      .key_B(key_B),
+        .key_ENTER(key_ENTER)
+  );
+
   Score_Display s1 (
       clk_1ms,
       score,
@@ -68,7 +91,7 @@ module Top_Student (
   );
 
   StateManager sM (
-      btnC,
+      (btnC | key_ENTER),
       clk,
       state
   );
@@ -79,7 +102,7 @@ module Top_Student (
       state,
       oled_data_menu
   );
-    
+
 
   Oled_Display d1 (
       clk_6p25MHz,
@@ -106,11 +129,11 @@ module Top_Student (
 
   Map map (
       .clk(clk),
-      .btnD(btnD),
-      .btnU(btnU),
-      .btnL(btnL),
-      .btnR(btnR),
-      .btnC(btnC),
+      .btnD(btnD | key_S),
+      .btnU(btnU | key_W),
+      .btnL(btnL | key_A),
+      .btnR(btnR | key_D),
+      .btnC(btnC | key_B),
       .en(state),
       .wall_tiles(wall_tiles),
       .breakable_tiles(breakable_tiles),
