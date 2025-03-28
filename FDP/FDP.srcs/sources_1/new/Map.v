@@ -10,6 +10,7 @@ module Map (
     en,
     input [12:0] pixel_index,
     input [95:0] wall_tiles,
+    input [95:0] breakable_tiles,
     output [15:0] pixel_data
 );
   // Grid parameters
@@ -58,20 +59,22 @@ module Map (
 
   // Module instantiation
   drawCordinate draw (
-      .cordinateIndex(pixel_index),
-      .greenX        (greenXTile * TILE_SIZE),
-      .greenY        (greenYTile * TILE_SIZE),
-      .yellowX       (yellowXTile * TILE_SIZE),
-      .yellowY       (yellowYTile * TILE_SIZE),
-      .wall_tiles    (wall_tiles),
-      .bomb_tiles    (bomb_tiles),
-      .oledColour    (pixel_data)
+      .cordinateIndex (pixel_index),
+      .greenX         (greenXTile * TILE_SIZE),
+      .greenY         (greenYTile * TILE_SIZE),
+      .yellowX        (yellowXTile * TILE_SIZE),
+      .yellowY        (yellowYTile * TILE_SIZE),
+      .wall_tiles     (wall_tiles),
+      .breakable_tiles(breakable_tiles),
+      .bomb_tiles     (bomb_tiles),
+      .oledColour     (pixel_data)
   );
 
   is_collision is_wall_green (
       .x_cur(greenXTile),
       .y_cur(greenYTile),
       .wall_tiles(wall_tiles),
+      .breakable_tiles(breakable_tiles),
       .direction(green_move),
       .en(en),
       .x_out(newGreenXTile),
@@ -82,6 +85,7 @@ module Map (
       .x_cur(yellowXTile),
       .y_cur(yellowYTile),
       .wall_tiles(wall_tiles),
+      .breakable_tiles(breakable_tiles),
       .direction(yellow_move),
       .en(en),
       .x_out(newYellowXTile),
@@ -106,7 +110,7 @@ module Map (
   always @(posedge clk) begin
     green_move <= en ? (btnU ? 1 : (btnR ? 2 : (btnD ? 3 : (btnL ? 4 : 0)))) : 0;
 
-    dropBomb <= en ? (bomb_countdown == 10) ? 0 : dropBomb | btnC : 0;
+    dropBomb   <= en ? (bomb_countdown == 10) ? 0 : dropBomb | btnC : 0;
 
     // Set bomb at current position when center button pressed
     if (en && btnC) begin
@@ -120,8 +124,8 @@ module Map (
 
   always @(posedge clk1p0) begin
     random_seed <= {
-        random_seed[14:0], random_seed[15] ^ random_seed[13] ^ random_seed[12] ^ random_seed[10]
-      };
+      random_seed[14:0], random_seed[15] ^ random_seed[13] ^ random_seed[12] ^ random_seed[10]
+    };
     greenXTile <= en ? newGreenXTile : GREEN_X_TILE;
     greenYTile <= en ? newGreenYTile : GREEN_Y_TILE;
 

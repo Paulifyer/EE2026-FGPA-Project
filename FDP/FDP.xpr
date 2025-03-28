@@ -31,7 +31,7 @@
     <Option Name="EnableBDX" Val="FALSE"/>
     <Option Name="DSAVendor" Val="xilinx"/>
     <Option Name="DSANumComputeUnits" Val="60"/>
-    <Option Name="WTXSimLaunchSim" Val="95"/>
+    <Option Name="WTXSimLaunchSim" Val="96"/>
     <Option Name="WTModelSimLaunchSim" Val="0"/>
     <Option Name="WTQuestaLaunchSim" Val="0"/>
     <Option Name="WTIesLaunchSim" Val="0"/>
@@ -59,6 +59,13 @@
   <FileSets Version="1" Minor="31">
     <FileSet Name="sources_1" Type="DesignSrcs" RelSrcDir="$PSRCDIR/sources_1">
       <Filter Type="Srcs"/>
+      <File Path="$PSRCDIR/sources_1/new/BcdConverter.v">
+        <FileInfo>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="implementation"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
       <File Path="$PSRCDIR/sources_1/new/MainMenu.v">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
@@ -105,6 +112,15 @@
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
+      <File Path="$PSRCDIR/sources_1/imports/VGA Text Generation/ascii_rom.v">
+        <FileInfo>
+          <Attr Name="ImportPath" Val="$PPRDIR/../../../Users/JQ/Downloads/Digital-Design-main/FPGA Projects/VGA Projects/VGA Text Generation/ascii_rom.v"/>
+          <Attr Name="ImportTime" Val="1717040361"/>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="implementation"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
       <File Path="$PSRCDIR/sources_1/imports/Modules/clock_generator_freq.v">
         <FileInfo>
           <Attr Name="ImportPath" Val="$PPRDIR/../../../Users/JQ/OneDrive - National University of Singapore/NUS Current/EE2026/Lab/Modules/clock_generator_freq.v"/>
@@ -133,6 +149,13 @@
         </FileInfo>
       </File>
       <File Path="$PSRCDIR/sources_1/new/is_collision.v">
+        <FileInfo>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="implementation"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
+      <File Path="$PSRCDIR/sources_1/new/score_on_pixel.v">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="implementation"/>
@@ -284,6 +307,16 @@
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
+      <File Path="$PSRCDIR/sources_1/imports/VGA Text Generation/top.v">
+        <FileInfo>
+          <Attr Name="AutoDisabled" Val="1"/>
+          <Attr Name="ImportPath" Val="$PPRDIR/../../../Users/JQ/Downloads/Digital-Design-main/FPGA Projects/VGA Projects/VGA Text Generation/top.v"/>
+          <Attr Name="ImportTime" Val="1717040361"/>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="implementation"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
       <Config>
         <Option Name="DesignMode" Val="RTL"/>
         <Option Name="TopModule" Val="Top_Student"/>
@@ -396,8 +429,8 @@
         <StratHandle Name="Flow_RuntimeOptimized" Flow="Vivado Synthesis 2018"/>
         <Step Id="synth_design">
           <Option Id="FlattenHierarchy">1</Option>
-          <Option Id="Directive">0</Option>
           <Option Id="FsmExtraction">0</Option>
+          <Option Id="Directive">0</Option>
         </Step>
       </Strategy>
       <GeneratedRun Dir="$PRUNDIR" File="gen_run.xml"/>

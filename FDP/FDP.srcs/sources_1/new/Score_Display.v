@@ -11,6 +11,7 @@ module Score_Display(
 
     reg [1:0] digit_counter = 0;
     reg [7:0] chars [3:0];
+    reg [3:0] bcd_chars [3:0];
 
     segment_display s1 (
         .clk(clk),
@@ -19,20 +20,28 @@ module Score_Display(
         .an(an)
     );
 
+    BcdConverter bcd (
+        .score(score),
+        .digit0(bcd_chars[3]),
+        .digit1(bcd_chars[2]),
+        .digit2(bcd_chars[1]),
+        .digit3(bcd_chars[0])
+    );
+
     always @(posedge clk) begin
         digit_counter <= digit_counter + 1;
         case (digit_counter)
-            2'b11: begin
-                chars[0] <= get_segment(score[15:12]);
-            end
-            2'b10: begin
-                chars[1] <= get_segment(score[11:8]);
+            2'b00: begin
+                chars[0] <= get_segment(bcd_chars[0]);
             end
             2'b01: begin
-                chars[2] <= get_segment(score[7:4]);
+                chars[1] <= get_segment(bcd_chars[1]);
             end
-            2'b00: begin
-                chars[3] <= get_segment(score[3:0]);
+            2'b10: begin
+                chars[2] <= get_segment(bcd_chars[2]);
+            end
+            2'b11: begin
+                chars[3] <= get_segment(bcd_chars[3]);
             end
         endcase
     end

@@ -36,11 +36,13 @@ module Top_Student (
   wire [12:0] pixel_index;
   wire [15:0] oled_data, oled_game_map, oled_data_menu;
   wire [95:0] wall_tiles;
+  wire [95:0] breakable_tiles;
 
   reg [15:0] score;
 
   // generte wall tiles 1 for wall 0 for no wall sparese
   assign wall_tiles = 96'h000000000000F0000F000000;
+  assign breakable_tiles = 96'h0000000000000000000000FF;
 
   slow_clock c1 (
       clk,
@@ -57,8 +59,6 @@ module Top_Student (
       clk,
       clk_1ms
   );
-
-  
 
   Score_Display s1 (
       clk_1ms,
@@ -113,6 +113,7 @@ module Top_Student (
       .btnC(btnC),
       .en(state),
       .wall_tiles(wall_tiles),
+        .breakable_tiles(breakable_tiles),
       .pixel_index(pixel_index),
       .pixel_data(oled_game_map)
   );
