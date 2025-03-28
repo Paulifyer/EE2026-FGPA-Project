@@ -3,7 +3,7 @@
 <!--                                                         -->
 <!-- Copyright 1986-2018 Xilinx, Inc. All Rights Reserved.   -->
 
-<Project Version="7" Minor="38" Path="C:/dev/EE2026-FPGA-Project/FDP/FDP.xpr">
+<Project Version="7" Minor="38" Path="C:/Users/weibi/Downloads/EE2026_Digital_Design/Lab/EE2026-FGPA-Project/FDP/FDP.xpr">
   <DefaultLaunch Dir="$PRUNDIR"/>
   <Configuration>
     <Option Name="Id" Val="95ef02bf319542289d23a0f879473ff6"/>
@@ -80,15 +80,6 @@
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PSRCDIR/sources_1/new/OLED_to_VGA.v">
-        <FileInfo>
-          <Attr Name="ImportPath" Val="$PPRDIR/../../../Users/JQ/Downloads/Telegram Desktop/WEEK_8_S1_06.xpr/FDP/FDP.srcs/sources_1/new/OLED_to_VGA.v"/>
-          <Attr Name="ImportTime" Val="1741827470"/>
-          <Attr Name="UsedIn" Val="synthesis"/>
-          <Attr Name="UsedIn" Val="implementation"/>
-          <Attr Name="UsedIn" Val="simulation"/>
-        </FileInfo>
-      </File>
       <File Path="$PSRCDIR/sources_1/imports/Desktop/Oled_Display.v">
         <FileInfo>
           <Attr Name="ImportPath" Val="$PPRDIR/../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../MODS.srcs/sources_1/imports/Desktop/Oled_Display.v"/>
@@ -107,15 +98,6 @@
       </File>
       <File Path="$PSRCDIR/sources_1/new/StateManager.v">
         <FileInfo>
-          <Attr Name="UsedIn" Val="synthesis"/>
-          <Attr Name="UsedIn" Val="implementation"/>
-          <Attr Name="UsedIn" Val="simulation"/>
-        </FileInfo>
-      </File>
-      <File Path="$PSRCDIR/sources_1/imports/VGA Text Generation/ascii_rom.v">
-        <FileInfo>
-          <Attr Name="ImportPath" Val="$PPRDIR/../../../Users/JQ/Downloads/Digital-Design-main/FPGA Projects/VGA Projects/VGA Text Generation/ascii_rom.v"/>
-          <Attr Name="ImportTime" Val="1717040361"/>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="implementation"/>
           <Attr Name="UsedIn" Val="simulation"/>
@@ -155,13 +137,6 @@
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PSRCDIR/sources_1/new/score_on_pixel.v">
-        <FileInfo>
-          <Attr Name="UsedIn" Val="synthesis"/>
-          <Attr Name="UsedIn" Val="implementation"/>
-          <Attr Name="UsedIn" Val="simulation"/>
-        </FileInfo>
-      </File>
       <File Path="$PSRCDIR/sources_1/imports/Modules/segment_display.v">
         <FileInfo>
           <Attr Name="ImportPath" Val="$PPRDIR/../../../Users/JQ/OneDrive - National University of Singapore/NUS Current/EE2026/Lab/Modules/segment_display.v"/>
@@ -180,10 +155,8 @@
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PSRCDIR/sources_1/imports/VGA Bouncing Square/vga_controller.v">
+      <File Path="$PSRCDIR/sources_1/new/switch_debounce.v">
         <FileInfo>
-          <Attr Name="ImportPath" Val="$PPRDIR/../../../Users/JQ/Downloads/Digital-Design-main/FPGA Projects/VGA Projects/VGA Bouncing Square/vga_controller.v"/>
-          <Attr Name="ImportTime" Val="1717040361"/>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="implementation"/>
           <Attr Name="UsedIn" Val="simulation"/>
@@ -212,6 +185,13 @@
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
+      <File Path="$PSRCDIR/sources_1/new/bomb.v">
+        <FileInfo SFType="SVerilog">
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="implementation"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
       <File Path="$PSRCDIR/sources_1/new/Top_Student.v">
         <FileInfo SFType="SVerilog">
           <Attr Name="ImportPath" Val="$PPRDIR/../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../FDP.srcs/sources_1/new/Top_Student.v"/>
@@ -221,11 +201,39 @@
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PSRCDIR/sources_1/imports/hdl/PS2Receiver.v">
+      <File Path="$PSRCDIR/sources_1/new/OLED_to_VGA.v">
         <FileInfo>
           <Attr Name="AutoDisabled" Val="1"/>
-          <Attr Name="ImportPath" Val="$PPRDIR/../../../Users/JQ/Downloads/Basys-3-Keyboard-hw.xpr/hw/hw.srcs/sources_1/imports/hdl/PS2Receiver.v"/>
-          <Attr Name="ImportTime" Val="1661323906"/>
+          <Attr Name="ImportPath" Val="$PPRDIR/../../../Users/JQ/Downloads/Telegram Desktop/WEEK_8_S1_06.xpr/FDP/FDP.srcs/sources_1/new/OLED_to_VGA.v"/>
+          <Attr Name="ImportTime" Val="1741827470"/>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="implementation"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
+      <File Path="$PSRCDIR/sources_1/imports/VGA Text Generation/ascii_rom.v">
+        <FileInfo>
+          <Attr Name="AutoDisabled" Val="1"/>
+          <Attr Name="ImportPath" Val="$PPRDIR/../../../Users/JQ/Downloads/Digital-Design-main/FPGA Projects/VGA Projects/VGA Text Generation/ascii_rom.v"/>
+          <Attr Name="ImportTime" Val="1717040361"/>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="implementation"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
+      <File Path="$PSRCDIR/sources_1/new/score_on_pixel.v">
+        <FileInfo>
+          <Attr Name="AutoDisabled" Val="1"/>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="implementation"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
+      <File Path="$PSRCDIR/sources_1/imports/VGA Bouncing Square/vga_controller.v">
+        <FileInfo>
+          <Attr Name="AutoDisabled" Val="1"/>
+          <Attr Name="ImportPath" Val="$PPRDIR/../../../Users/JQ/Downloads/Digital-Design-main/FPGA Projects/VGA Projects/VGA Bouncing Square/vga_controller.v"/>
+          <Attr Name="ImportTime" Val="1717040361"/>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="implementation"/>
           <Attr Name="UsedIn" Val="simulation"/>
@@ -235,26 +243,6 @@
         <FileInfo>
           <Attr Name="AutoDisabled" Val="1"/>
           <Attr Name="ImportPath" Val="$PPRDIR/../../../Users/JQ/Downloads/Basys-3-Keyboard-hw.xpr/hw/hw.srcs/sources_1/imports/hdl/bin2ascii.v"/>
-          <Attr Name="ImportTime" Val="1661323906"/>
-          <Attr Name="UsedIn" Val="synthesis"/>
-          <Attr Name="UsedIn" Val="implementation"/>
-          <Attr Name="UsedIn" Val="simulation"/>
-        </FileInfo>
-      </File>
-      <File Path="$PSRCDIR/sources_1/imports/hdl/debouncer.v">
-        <FileInfo>
-          <Attr Name="AutoDisabled" Val="1"/>
-          <Attr Name="ImportPath" Val="$PPRDIR/../../../Users/JQ/Downloads/Basys-3-Keyboard-hw.xpr/hw/hw.srcs/sources_1/imports/hdl/debouncer.v"/>
-          <Attr Name="ImportTime" Val="1661323906"/>
-          <Attr Name="UsedIn" Val="synthesis"/>
-          <Attr Name="UsedIn" Val="implementation"/>
-          <Attr Name="UsedIn" Val="simulation"/>
-        </FileInfo>
-      </File>
-      <File Path="$PSRCDIR/sources_1/imports/hdl/top.v">
-        <FileInfo>
-          <Attr Name="AutoDisabled" Val="1"/>
-          <Attr Name="ImportPath" Val="$PPRDIR/../../../Users/JQ/Downloads/Basys-3-Keyboard-hw.xpr/hw/hw.srcs/sources_1/imports/hdl/top.v"/>
           <Attr Name="ImportTime" Val="1661323906"/>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="implementation"/>

@@ -8,7 +8,7 @@ module drawCordinate (
     input  [ 7:0] yellowY,
     input  [95:0] wall_tiles,
     input  [95:0] breakable_tiles,
-    input  [95:0] bomb_tiles,
+    input  [20:0] bomb_tiles,
     output [15:0] oledColour
 );
 
@@ -39,7 +39,7 @@ module drawCordinate (
 
   wire isWall = wall_tiles[tileIndex];
   wire isBreakable = breakable_tiles[tileIndex];
-  wire isBomb = bomb_tiles[tileIndex];
+  wire isBomb = tileIndex == bomb_tiles[6:0] | tileIndex == bomb_tiles[13:7] | tileIndex == bomb_tiles[20:14];
 
   // Assign color based on tile type
   assign objectColour = isWall ? blue : (isBreakable ? white : (isBomb ? red : black));

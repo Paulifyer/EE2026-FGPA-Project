@@ -11,7 +11,8 @@ module Map (
     input [12:0] pixel_index,
     input [95:0] wall_tiles,
     input [95:0] breakable_tiles,
-    output [15:0] pixel_data
+    output [15:0] pixel_data,
+    output [2:0] led
 );
   // Grid parameters
   parameter TILE_SIZE = 8;  // Tile size in pixels
@@ -42,9 +43,17 @@ module Map (
   wire [ 7:0] newYellowYTile;
 
   // Game state registers
-  reg  [95:0] bomb_tiles;  // Bomb placement bitmap
+  /*reg  [95:0] bomb_tiles;  // Bomb placement bitmap
   reg  [ 3:0] bomb_countdown;  // Countdown
-  reg         dropBomb;
+  reg         dropBomb;*/
+  wire [6:0] player_index;
+  wire [20:0] bomb_tiles;
+  wire [95:0] after_break_tiles;
+  assign player_index = (greenYTile) * GRID_WIDTH + (greenXTile);
+  reg [2:0] bomb_limit = 3, bomb_range = 3;
+  reg [13:0] bomb_time = 10000;
+  reg [2:0] player_health = 3'b111;
+  reg push_bomb_ability = 1;
 
   // Add new registers for yellow block and random generator
   reg  [15:0] random_seed;  // Random seed for yellow green_movement
@@ -58,6 +67,8 @@ module Map (
   );
 
   // Module instantiation
+  bomb boom(clk,btnC,en,push_bomb_ability,wall_tiles,breakable_tiles,player_index,player_health,bomb_limit,bomb_range,bomb_time,after_break_tiles,bomb_tiles,led);
+  
   drawCordinate draw (
       .cordinateIndex (pixel_index),
       .greenX         (greenXTile * TILE_SIZE),
@@ -65,7 +76,7 @@ module Map (
       .yellowX        (yellowXTile * TILE_SIZE),
       .yellowY        (yellowYTile * TILE_SIZE),
       .wall_tiles     (wall_tiles),
-      .breakable_tiles(breakable_tiles),
+      .breakable_tiles(after_break_tiles),
       .bomb_tiles     (bomb_tiles),
       .oledColour     (pixel_data)
   );
@@ -74,7 +85,7 @@ module Map (
       .x_cur(greenXTile),
       .y_cur(greenYTile),
       .wall_tiles(wall_tiles),
-      .breakable_tiles(breakable_tiles),
+      .breakable_tiles(after_break_tiles),
       .direction(green_move),
       .en(en),
       .x_out(newGreenXTile),
@@ -85,7 +96,7 @@ module Map (
       .x_cur(yellowXTile),
       .y_cur(yellowYTile),
       .wall_tiles(wall_tiles),
-      .breakable_tiles(breakable_tiles),
+      .breakable_tiles(after_break_tiles),
       .direction(yellow_move),
       .en(en),
       .x_out(newYellowXTile),
@@ -100,16 +111,16 @@ module Map (
     yellowYTile    = YELLOW_Y_TILE;
     green_move     = 0;
     yellow_move    = 0;
-    bomb_tiles     = 0;
+    /*bomb_tiles     = 0;
     bomb_countdown = 0;
-    dropBomb       = 0;
+    dropBomb       = 0;*/
     random_seed    = 16'hACE1;  // Non-zero seed value
   end
 
   // Clock division and input processing
   always @(posedge clk) begin
     green_move <= en ? (btnU ? 1 : (btnR ? 2 : (btnD ? 3 : (btnL ? 4 : 0)))) : 0;
-
+/*
     dropBomb   <= en ? (bomb_countdown == 10) ? 0 : dropBomb | btnC : 0;
 
     // Set bomb at current position when center button pressed
@@ -119,7 +130,7 @@ module Map (
       bomb_tiles <= 0;
     end else begin
       bomb_tiles <= bomb_tiles;
-    end
+    end*/
   end
 
   always @(posedge clk1p0) begin
@@ -133,7 +144,7 @@ module Map (
     yellowYTile <= en ? newYellowYTile : YELLOW_Y_TILE;
 
     yellow_move <= en ? (random_seed[1:0] + 1) : 0;
-    bomb_countdown <= dropBomb ? 10 : bomb_countdown > 0 ? bomb_countdown - 1 : 0;
+    /*bomb_countdown <= dropBomb ? 10 : bomb_countdown > 0 ? bomb_countdown - 1 : 0;*/
   end
 
 endmodule

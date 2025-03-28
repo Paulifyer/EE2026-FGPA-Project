@@ -29,7 +29,7 @@ package Data_Item;
     parameter GRID_LENGTH = 8;
     parameter BLACK = 16'h0000, WHITE = 16'hFFFF, RED = 16'hF800, GREEN = 16'h07E0, BROWN = 16'h8A00;
     
-    parameter bomb_range = 3;
-    parameter bomb_time = 2;
+//    parameter bomb_range = 1; /*bomb radius! not bomb diameter*/
+//    parameter bomb_time = 2;
 endpackage
 

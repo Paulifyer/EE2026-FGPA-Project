@@ -24,7 +24,8 @@ module Top_Student (
     output [7:0] seg,
     output [3:0] an,
     output hsync,
-    output vsync
+    output vsync,
+    output [2:0] led
 );
 
   import Data_Item::*;
@@ -115,19 +116,20 @@ module Top_Student (
       .wall_tiles(wall_tiles),
       .breakable_tiles(breakable_tiles),
       .pixel_index(pixel_index),
-      .pixel_data(oled_game_map)
+      .pixel_data(oled_game_map),
+      .led(led)
   );
 
 
-  OLED_to_VGA game_to_vga (
-      .clk(clk),
-      .pixel_data(oled_data),
-      .score(score),
-      .pixel_index(pixel_index),
-      .hsync(hsync),
-      .vsync(vsync),
-      .rgb(rgb)
-  );
+//  OLED_to_VGA game_to_vga (
+//      .clk(clk),
+//      .pixel_data(oled_data),
+//      .score(score),
+//      .pixel_index(pixel_index),
+//      .hsync(hsync),
+//      .vsync(vsync),
+//      .rgb(rgb)
+//  );
 
 
   assign oled_data = (!state) ? oled_data_menu : oled_game_map;
