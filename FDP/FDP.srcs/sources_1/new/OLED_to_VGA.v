@@ -47,13 +47,7 @@ module OLED_to_VGA (
   wire [12:0] buff_index = vga_to_oled_y * OLED_WIDTH + vga_to_oled_x;
 
   reg reset;
-  
-//  initial begin
-//    reset = 1;
-//    #5; 
-//    reset = 0;
-//  end
-  
+
   // Instantiate the VGA controller
   vga_controller vga_c (
       .clk_100MHz(clk_100MHz),
@@ -65,37 +59,57 @@ module OLED_to_VGA (
       .x(x),
       .y(y)
   );
-  
-  
+
   always @(posedge clk_100MHz) begin
-      frame_buffer[pixel_index] <= {pixel_data[4:1], pixel_data[10:7], pixel_data[15:12]};
+    frame_buffer[pixel_index] <= {pixel_data[4:1], pixel_data[10:7], pixel_data[15:12]};
   end
-  
+
   wire is_in_display_area = (x >= X_OFFSET && x < (X_OFFSET + OLED_WIDTH * SCALE_X) && 
                             y >= Y_OFFSET && y < (Y_OFFSET + OLED_HEIGHT * SCALE_Y));
-  wire is_in_score_area = (x >= X_OFFSET && x < (X_OFFSET + OLED_WIDTH * SCALE_X) && 
-                            y >= Y_OFFSET + OLED_HEIGHT * SCALE_Y && y < (Y_OFFSET + OLED_HEIGHT * SCALE_Y + 16));
+
   wire is_in_left_right_border = ((x >= X_OFFSET - BORDER_WIDTH && x < X_OFFSET) ||
                                  (x >= X_OFFSET + OLED_WIDTH * SCALE_X && x < X_OFFSET + OLED_WIDTH * SCALE_X + BORDER_WIDTH)) &&
                                 (y >= Y_OFFSET - BORDER_WIDTH && y < Y_OFFSET + OLED_HEIGHT * SCALE_Y + BORDER_WIDTH);
-  
+
   wire is_in_top_bottom_border = ((y >= Y_OFFSET - BORDER_WIDTH && y < Y_OFFSET) ||
                                  (y >= Y_OFFSET + OLED_HEIGHT * SCALE_Y && y < Y_OFFSET + OLED_HEIGHT * SCALE_Y + BORDER_WIDTH)) &&
                                 (x >= X_OFFSET - BORDER_WIDTH && x < X_OFFSET + OLED_WIDTH * SCALE_X + BORDER_WIDTH);
-  
+
   wire is_in_border = is_in_left_right_border || is_in_top_bottom_border;
-  
+
+  // Convert binary score to 4-digit BCD (assumes score < 10000)
+  wire [3:0] digit0, digit1, digit2, digit3;
+
+  // Instantiate the BCD converter module
+  BcdConverter bcd_inst (
+      .score (score),
+      .digit0(digit0),
+      .digit1(digit1),
+      .digit2(digit2),
+      .digit3(digit3)
+  );
+
+  wire score_pixel_active;
+
+  // Instantiate the score module:
+  ScoreOnPixel sp_inst (
+      .clk            (clk_100MHz),
+      .x_in           (x),
+      .y_in           (y),
+      .s0             (digit0),
+      .s1             (digit1),
+      .s2             (digit2),
+      .s3             (digit3),
+      .in_score_region(is_in_score_area),
+      .pixel_on       (score_pixel_active)
+  );
+
   always @(posedge p_tick) begin
-    if (~video_on)
-      rgb <= 12'h000;
-    else if (is_in_display_area)
-      rgb <= frame_buffer[buff_index];
-    else if (is_in_score_area)
-      rgb <= 12'hf0f;
-    else if (is_in_border)
-      rgb <= BORDER_COLOR;
-    else
-      rgb <= 12'h000;
+    if (~video_on) rgb <= 12'h000;
+    else if (is_in_display_area) rgb <= frame_buffer[buff_index];
+    else if (is_in_border) rgb <= BORDER_COLOR;
+    else if (is_in_score_area) rgb <= score_pixel_active ? 12'hFFF : 12'h00f;
+    else rgb <= 12'h000;
   end
 
 endmodule
