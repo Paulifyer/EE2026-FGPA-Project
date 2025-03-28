@@ -3,6 +3,7 @@
 module OLED_to_VGA (
     input clk_100MHz,
     input [15:0] pixel_data,
+    input [15:0] score,
     input [12:0] pixel_index,
     output hsync,
     vsync,
@@ -72,7 +73,8 @@ module OLED_to_VGA (
   
   wire is_in_display_area = (x >= X_OFFSET && x < (X_OFFSET + OLED_WIDTH * SCALE_X) && 
                             y >= Y_OFFSET && y < (Y_OFFSET + OLED_HEIGHT * SCALE_Y));
-  
+  wire is_in_score_area = (x >= X_OFFSET && x < (X_OFFSET + OLED_WIDTH * SCALE_X) && 
+                            y >= Y_OFFSET + OLED_HEIGHT * SCALE_Y && y < (Y_OFFSET + OLED_HEIGHT * SCALE_Y + 16));
   wire is_in_left_right_border = ((x >= X_OFFSET - BORDER_WIDTH && x < X_OFFSET) ||
                                  (x >= X_OFFSET + OLED_WIDTH * SCALE_X && x < X_OFFSET + OLED_WIDTH * SCALE_X + BORDER_WIDTH)) &&
                                 (y >= Y_OFFSET - BORDER_WIDTH && y < Y_OFFSET + OLED_HEIGHT * SCALE_Y + BORDER_WIDTH);
@@ -83,12 +85,13 @@ module OLED_to_VGA (
   
   wire is_in_border = is_in_left_right_border || is_in_top_bottom_border;
   
-  // Simplified RGB output logic
   always @(posedge p_tick) begin
     if (~video_on)
       rgb <= 12'h000;
     else if (is_in_display_area)
       rgb <= frame_buffer[buff_index];
+    else if (is_in_score_area)
+      rgb <= 12'hf0f;
     else if (is_in_border)
       rgb <= BORDER_COLOR;
     else

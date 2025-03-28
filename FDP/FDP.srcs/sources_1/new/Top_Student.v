@@ -20,25 +20,24 @@ module Top_Student (
     JCIn,
     input [15:0] sw,
     output [7:0] JB,
-    output [15:0] led,
     output [11:0] rgb,
+    output [7:0] seg,
+    output [3:0] an,
     output hsync,
     output vsync
 );
 
   import Data_Item::*;
 
-  parameter Task_4D_pw = (1 << 15) | (1 << 8) | (1 << 7) | (1 << 5) | (1 << 3) | (1 << 1) | (1 << 0);
 
   wire clk_6p25MHz, clk_1ms, segClk;
   wire clkOneSec; wire state; //Ethan : stuff for the menu
   wire frame_begin, sending_pixels, sample_pixel;
   wire [12:0] pixel_index;
-  wire [15:0] oled_data, oled_data_D, oled_data_menu;
-  wire [15:0] oled_data_E;
+  wire [15:0] oled_data, oled_game_map, oled_data_menu;
   wire [95:0] wall_tiles;
-  
-  assign oled_data_E = 16'hAAA;
+
+  reg [15:0] score;
 
   // generte wall tiles 1 for wall 0 for no wall sparese
   assign wall_tiles = 96'h000000000000F0000F000000;
@@ -48,13 +47,26 @@ module Top_Student (
       16,
       clk_6p25MHz
   );
-  
-  slow_clock c2 (
-    clk, 
-    200000000, 
-    clkOneSec
+
+  clock_generator_freq #(1) c3 (
+      clk,
+      clkOneSec
   );
   
+  clock_generator_freq #(1000) c4 (
+      clk,
+      clk_1ms
+  );
+
+  
+
+  Score_Display s1 (
+      clk_1ms,
+      score,
+      seg,
+      an
+  );
+
   StateManager sM (
     btnC, 
     clk, 
@@ -67,7 +79,7 @@ module Top_Student (
     state, 
     oled_data_menu
   );
-
+  
   
   Oled_Display d1 (
       clk_6p25MHz,
@@ -85,6 +97,12 @@ module Top_Student (
       JB[6],
       JB[7]
   );
+
+  Score_Tracker scoreTrack (
+      clkOneSec,
+      state,
+      score
+  );
   
   Map map (
       .clk(clk),
@@ -93,16 +111,17 @@ module Top_Student (
       .btnL(btnL),
       .btnR(btnR),
       .btnC(btnC),
-      .en(sw == Task_4D_pw),
+      .en(state),
       .wall_tiles(wall_tiles),
       .pixel_index(pixel_index),
-      .pixel_data(oled_data_D)
+      .pixel_data(oled_game_map)
   );
   
 
   OLED_to_VGA game_to_vga (
       .clk_100MHz(clk),
       .pixel_data(oled_data),
+      .score(score),
       .pixel_index(pixel_index),
       .hsync(hsync),
       .vsync(vsync),
@@ -110,8 +129,6 @@ module Top_Student (
   );
 
 
-  assign oled_data = (!state) ? oled_data_menu : 
-                     (sw == Task_4D_pw) ? oled_data_D :
-                     oled_data_E;
+  assign oled_data = (!state) ? oled_data_menu : oled_game_map;
 
 endmodule
