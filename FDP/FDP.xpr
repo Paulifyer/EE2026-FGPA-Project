@@ -98,6 +98,15 @@
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
+      <File Path="$PSRCDIR/sources_1/imports/hdl/PS2Receiver.v">
+        <FileInfo>
+          <Attr Name="ImportPath" Val="$PPRDIR/../../../Users/JQ/Downloads/Basys-3-Keyboard-hw.xpr/hw/hw.srcs/sources_1/imports/hdl/PS2Receiver.v"/>
+          <Attr Name="ImportTime" Val="1661323906"/>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="implementation"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
       <File Path="$PSRCDIR/sources_1/new/Score_Tracker.v">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
@@ -125,6 +134,15 @@
         <FileInfo>
           <Attr Name="ImportPath" Val="$PPRDIR/../../../Users/JQ/OneDrive - National University of Singapore/NUS Current/EE2026/Lab/Modules/clock_generator_freq.v"/>
           <Attr Name="ImportTime" Val="1742553113"/>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="implementation"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
+      <File Path="$PSRCDIR/sources_1/imports/hdl/debouncer.v">
+        <FileInfo>
+          <Attr Name="ImportPath" Val="$PPRDIR/../../../Users/JQ/Downloads/Basys-3-Keyboard-hw.xpr/hw/hw.srcs/sources_1/imports/hdl/debouncer.v"/>
+          <Attr Name="ImportTime" Val="1661323906"/>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="implementation"/>
           <Attr Name="UsedIn" Val="simulation"/>
@@ -162,19 +180,19 @@
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PSRCDIR/sources_1/imports/Modules/segment_display.v">
+      <File Path="$PSRCDIR/sources_1/new/slow_clock.v">
         <FileInfo>
-          <Attr Name="ImportPath" Val="$PPRDIR/../../../Users/JQ/OneDrive - National University of Singapore/NUS Current/EE2026/Lab/Modules/segment_display.v"/>
-          <Attr Name="ImportTime" Val="1742748704"/>
+          <Attr Name="ImportPath" Val="$PPRDIR/../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../FDP.srcs/sources_1/new/slow_clock.v"/>
+          <Attr Name="ImportTime" Val="1741168736"/>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="implementation"/>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PSRCDIR/sources_1/new/slow_clock.v">
+      <File Path="$PSRCDIR/sources_1/imports/hdl/top.v">
         <FileInfo>
-          <Attr Name="ImportPath" Val="$PPRDIR/../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../FDP.srcs/sources_1/new/slow_clock.v"/>
-          <Attr Name="ImportTime" Val="1741168736"/>
+          <Attr Name="ImportPath" Val="$PPRDIR/../../../Users/JQ/Downloads/Basys-3-Keyboard-hw.xpr/hw/hw.srcs/sources_1/imports/hdl/top.v"/>
+          <Attr Name="ImportTime" Val="1661323906"/>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="implementation"/>
           <Attr Name="UsedIn" Val="simulation"/>
@@ -212,6 +230,15 @@
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
+      <File Path="$PSRCDIR/sources_1/imports/Modules/segment_display.v">
+        <FileInfo SFType="SVerilog">
+          <Attr Name="ImportPath" Val="$PPRDIR/../../../Users/JQ/OneDrive - National University of Singapore/NUS Current/EE2026/Lab/Modules/segment_display.v"/>
+          <Attr Name="ImportTime" Val="1742748704"/>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="implementation"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
       <File Path="$PSRCDIR/sources_1/new/Top_Student.v">
         <FileInfo SFType="SVerilog">
           <Attr Name="ImportPath" Val="$PPRDIR/../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../FDP.srcs/sources_1/new/Top_Student.v"/>
@@ -221,40 +248,10 @@
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PSRCDIR/sources_1/imports/hdl/PS2Receiver.v">
-        <FileInfo>
-          <Attr Name="AutoDisabled" Val="1"/>
-          <Attr Name="ImportPath" Val="$PPRDIR/../../../Users/JQ/Downloads/Basys-3-Keyboard-hw.xpr/hw/hw.srcs/sources_1/imports/hdl/PS2Receiver.v"/>
-          <Attr Name="ImportTime" Val="1661323906"/>
-          <Attr Name="UsedIn" Val="synthesis"/>
-          <Attr Name="UsedIn" Val="implementation"/>
-          <Attr Name="UsedIn" Val="simulation"/>
-        </FileInfo>
-      </File>
       <File Path="$PSRCDIR/sources_1/imports/hdl/bin2ascii.v">
         <FileInfo>
           <Attr Name="AutoDisabled" Val="1"/>
           <Attr Name="ImportPath" Val="$PPRDIR/../../../Users/JQ/Downloads/Basys-3-Keyboard-hw.xpr/hw/hw.srcs/sources_1/imports/hdl/bin2ascii.v"/>
-          <Attr Name="ImportTime" Val="1661323906"/>
-          <Attr Name="UsedIn" Val="synthesis"/>
-          <Attr Name="UsedIn" Val="implementation"/>
-          <Attr Name="UsedIn" Val="simulation"/>
-        </FileInfo>
-      </File>
-      <File Path="$PSRCDIR/sources_1/imports/hdl/debouncer.v">
-        <FileInfo>
-          <Attr Name="AutoDisabled" Val="1"/>
-          <Attr Name="ImportPath" Val="$PPRDIR/../../../Users/JQ/Downloads/Basys-3-Keyboard-hw.xpr/hw/hw.srcs/sources_1/imports/hdl/debouncer.v"/>
-          <Attr Name="ImportTime" Val="1661323906"/>
-          <Attr Name="UsedIn" Val="synthesis"/>
-          <Attr Name="UsedIn" Val="implementation"/>
-          <Attr Name="UsedIn" Val="simulation"/>
-        </FileInfo>
-      </File>
-      <File Path="$PSRCDIR/sources_1/imports/hdl/top.v">
-        <FileInfo>
-          <Attr Name="AutoDisabled" Val="1"/>
-          <Attr Name="ImportPath" Val="$PPRDIR/../../../Users/JQ/Downloads/Basys-3-Keyboard-hw.xpr/hw/hw.srcs/sources_1/imports/hdl/top.v"/>
           <Attr Name="ImportTime" Val="1661323906"/>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="implementation"/>
@@ -485,16 +482,24 @@
       <ReportStrategy Name="Vivado Synthesis Default Reports" Flow="Vivado Synthesis 2018"/>
       <Report Name="ROUTE_DESIGN.REPORT_METHODOLOGY" Enabled="1"/>
     </Run>
-    <Run Id="impl_1" Type="Ft2:EntireDesign" Part="xc7a35tcpg236-1" ConstrsSet="constrs_1" Description="Default settings for Implementation." IncrementalCheckpoint="$PPRDIR/incremental_impl.dcp" WriteIncrSynthDcp="false" State="current" Dir="$PRUNDIR/impl_1" SynthRun="synth_1" IncludeInArchive="true" GenFullBitstream="true">
+    <Run Id="impl_1" Type="Ft2:EntireDesign" Part="xc7a35tcpg236-1" ConstrsSet="constrs_1" Description="Fastest possible runtime, all timing-driven behavior disabled. Useful for utilization estimation." IncrementalCheckpoint="$PPRDIR/incremental_impl.dcp" WriteIncrSynthDcp="false" State="current" Dir="$PRUNDIR/impl_1" SynthRun="synth_1" IncludeInArchive="true" GenFullBitstream="true">
       <Strategy Version="1" Minor="2">
-        <StratHandle Name="Vivado Implementation Defaults" Flow="Vivado Implementation 2018"/>
+        <StratHandle Name="Flow_Quick" Flow="Vivado Implementation 2018">
+          <Desc>Fastest possible runtime, all timing-driven behavior disabled. Useful for utilization estimation.</Desc>
+        </StratHandle>
         <Step Id="init_design"/>
-        <Step Id="opt_design"/>
+        <Step Id="opt_design">
+          <Option Id="Directive">4</Option>
+        </Step>
         <Step Id="power_opt_design"/>
-        <Step Id="place_design"/>
+        <Step Id="place_design">
+          <Option Id="Directive">16</Option>
+        </Step>
         <Step Id="post_place_power_opt_design"/>
         <Step Id="phys_opt_design"/>
-        <Step Id="route_design"/>
+        <Step Id="route_design">
+          <Option Id="Directive">6</Option>
+        </Step>
         <Step Id="post_route_phys_opt_design"/>
         <Step Id="write_bitstream"/>
       </Strategy>
