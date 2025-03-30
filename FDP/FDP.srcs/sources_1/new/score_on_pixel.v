@@ -20,12 +20,6 @@ module ScoreOnPixel #(
     output reg pixel_on
 );
 
-  parameter CHAR_WIDTH = 8;  // ASCII character width
-  parameter CHAR_HEIGHT = 16;  // ASCII character height
-  parameter SCORE_SCALE_2N = 1;  // Scale factor as 2^n for better visibility (scale = 2)
-  parameter SCORE_NUM_DIGITS = 4;  // Number of digits to display
-  parameter SCREEN_WIDTH = 640;  // Total screen width
-  parameter SCREEN_HEIGHT = 480;  // Total screen height
 
   // Pre-calculate constants for efficiency
   localparam EFFECTIVE_CHAR_WIDTH = CHAR_WIDTH << SCORE_SCALE_2N;
