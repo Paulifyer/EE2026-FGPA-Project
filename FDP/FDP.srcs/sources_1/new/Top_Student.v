@@ -45,7 +45,7 @@ module Top_Student (
   reg  [7:0] current_key;
 
 //   assign led = current_key;
-    assign led = 16'hFFFF;
+    assign led = 16'h0000;
 
   wire key_W, key_A, key_S, key_D, key_B, key_ENTER;
 

@@ -1,7 +1,7 @@
 module keyboard (
-    input  clk,
-    input  PS2Data,
-    input  PS2Clk,
+    input clk,
+    input PS2Data,
+    input PS2Clk,
     output reg [7:0] pressed_key,
     output key_W,
     output key_A,
@@ -17,7 +17,7 @@ module keyboard (
   parameter S = 8'b00011011;
   parameter D = 8'b00100011;
   parameter B = 8'b00110010;
-parameter ENTER = 8'b01011010;
+  parameter ENTER = 8'b01011010;
 
   wire [15:0] keycode;
   wire        flag;
@@ -34,11 +34,8 @@ parameter ENTER = 8'b01011010;
   // Simpler key handling
   always @(posedge clk) begin
     if (flag) begin
-      // If lower byte is F0, it's a key release - clear the current key
       if (keycode[7:0] == 8'hF0) pressed_key <= 8'h00;  // No key pressed
-      // If upper byte is F0, it's an extended key release - also clear
       else if (keycode[15:8] == 8'hF0) pressed_key <= 8'h00;  // No key pressed
-      // Otherwise, it's a key press - store the key code
       else
         pressed_key <= keycode[7:0];  // Store the key code
     end
@@ -46,10 +43,10 @@ parameter ENTER = 8'b01011010;
 
   assign current_key = pressed_key;
 
-    assign key_W = (pressed_key == W) ? 1 : 0;
-    assign key_A = (pressed_key == A) ? 1 : 0;
-    assign key_S = (pressed_key == S) ? 1 : 0;
-    assign key_D = (pressed_key == D) ? 1 : 0;
-    assign key_B = (pressed_key == B) ? 1 : 0;
-    assign key_ENTER = (pressed_key == ENTER) ? 1 : 0;
+  assign key_W = (pressed_key == W) ? 1 : 0;
+  assign key_A = (pressed_key == A) ? 1 : 0;
+  assign key_S = (pressed_key == S) ? 1 : 0;
+  assign key_D = (pressed_key == D) ? 1 : 0;
+  assign key_B = (pressed_key == B) ? 1 : 0;
+  assign key_ENTER = (pressed_key == ENTER) ? 1 : 0;
 endmodule

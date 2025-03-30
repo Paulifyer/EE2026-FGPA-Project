@@ -12,12 +12,14 @@ module drawCordinate (
     output [15:0] oledColour
 );
 
-  parameter black  = 16'h0000;
-  parameter red    = 16'hF800;
-  parameter white  = 16'hFFFF;
-  parameter green  = 16'h07E0;
-  parameter blue   = 16'h001F;
-  parameter yellow = 16'hFFE0;
+import sprites::*;
+
+  parameter BLACK  = 16'h0000;
+  parameter RED    = 16'hF800;
+  parameter WHITE  = 16'hFFFF;
+  parameter GREEN  = 16'h07E0;
+  parameter BLUE   = 16'h001F;
+  parameter YELLOW = 16'hFFE0;
 
   parameter TILE_WIDTH  = 8;  // 96/12 = 8 pixels per tile width
   parameter TILE_HEIGHT = 8;  // 64/8 = 8 pixels per tile height
@@ -41,28 +43,39 @@ module drawCordinate (
   wire isBreakable = breakable_tiles[tileIndex];
   wire isBomb = bomb_tiles[tileIndex];
 
-  // Assign color based on tile type
-  assign objectColour = isWall ? blue : (isBreakable ? white : (isBomb ? red : black));
+  // Calculate local coordinates within an 8x8 tile
+  wire [2:0] localX = pixelX % TILE_WIDTH;
+  wire [2:0] localY = pixelY % TILE_HEIGHT;
+  wire [5:0] tilePixelIndex = localY * TILE_WIDTH + localX;
+  
+  // Determine active sprite pixel for wall and breakable using sprites data.
+  wire wallActive = isWall && (WALL_SPRITE_DATA[~tilePixelIndex]);
+  wire brickActive = isBreakable && (BRICK_SPRITE_DATA[~tilePixelIndex]);
+
+  // Assign color based on tile type: bomb has highest priority.
+  assign objectColour = isBomb ? WHITE : 
+                        (~wallActive & isWall ? BLUE : 
+                        (~brickActive & isBreakable ? RED : BLACK));
 
   // Instantiate drawSquare for green and yellow blocks
-  drawSquare greenSquare (
+  drawSquare #(8) greenSquare (
       .x(greenX),
       .y(greenY),
-      .size(8),
-      .colour(green),
+      .colour(GREEN),
+      .squareData(CAT_SPRITE_DATA),
       .cordinateIndex(cordinateIndex),
       .oledColour(greenSquareColour)
   );
 
-  drawSquare yellowSquare (
+  drawSquare #(8) yellowSquare (
       .x(yellowX),
       .y(yellowY),
-      .size(8),
-      .colour(yellow),
+      .colour(YELLOW),
+      .squareData(DINO_SPRITE_DATA),
       .cordinateIndex(cordinateIndex),
       .oledColour(yellowSquareColour)
   );
-
+  
   // Combine elements with priority: yellow, green, then wall
   assign oledColour = yellowSquareColour | greenSquareColour | objectColour;
 endmodule
