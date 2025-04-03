@@ -11,7 +11,10 @@ module OLED_to_VGA (
 );
   // Border parameters
   parameter BORDER_WIDTH = 4;
-  parameter BORDER_COLOR = 12'hFFF;
+
+  // Color constants
+  parameter COLOUR_BLACK = 12'h000;
+  parameter COLOUR_WHITE = 12'hFFF;
 
   wire video_on;
   wire [9:0] x;
@@ -130,13 +133,12 @@ module OLED_to_VGA (
 
 
   always @(posedge clk) begin
-    if (~video_on) rgb <= 12'h000;
-    else if (is_in_score_area && score_pixel_active)
-      rgb <= 12'hFFF;  // Score digits in white - highest priority
+    if (~video_on) rgb <= COLOUR_BLACK;
     else if (is_in_display_area_reg) rgb <= frame_buff_data;  // Use registered data
-    else if (is_in_border) rgb <= BORDER_COLOR;  // Border around game
-    else if (is_in_score_area) rgb <= 12'h008;  // Score background in dark blue
-    else rgb <= 12'h000;  // Everything else black
+    else if (is_in_border) rgb <= COLOUR_WHITE;
+    else if (is_in_score_area && score_pixel_active) rgb <= COLOUR_WHITE;
+    else if (is_in_score_area) rgb <= COLOUR_BLACK;
+    else rgb <= COLOUR_BLACK;  // Everything else black
   end
 
 endmodule

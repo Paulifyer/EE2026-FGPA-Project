@@ -27,14 +27,14 @@ module Map (
   parameter YELLOW_Y_TILE = 6;
 
   // movement control registers
-  reg  [ 2:0] green_move;  // 1: up, 2: right, 3: down, 4: left
-  reg  [ 2:0] yellow_move;  // 1: up, 2: right, 3: down, 4: left
+  reg  [ 2:0] user_move;  // 1: up, 2: right, 3: down, 4: left
+  reg  [ 2:0] bot_move;  // 1: up, 2: right, 3: down, 4: left
 
   // Position registers
-  reg  [ 7:0] greenXTile;
-  reg  [ 7:0] greenYTile;
-  reg  [ 7:0] yellowXTile;
-  reg  [ 7:0] yellowYTile;
+  reg  [ 7:0] userXTile;
+  reg  [ 7:0] userYTile;
+  reg  [ 7:0] botXTile;
+  reg  [ 7:0] botYTile;
 
   wire [ 7:0] newGreenXTile;
   wire [ 7:0] newGreenYTile;
@@ -46,8 +46,8 @@ module Map (
   reg  [ 3:0] bomb_countdown;  // Countdown
   reg         dropBomb;
 
-  // Add new registers for yellow block and random generator
-  reg  [15:0] random_seed;  // Random seed for yellow green_movement
+  // Add new registers for bot block and random generator
+  reg  [15:0] random_seed;  // Random seed for bot user_movement
 
   wire        clk1p0;
 
@@ -60,33 +60,33 @@ module Map (
   // Module instantiation
   drawCordinate draw (
       .cordinateIndex (pixel_index),
-      .greenX         (greenXTile * TILE_SIZE),
-      .greenY         (greenYTile * TILE_SIZE),
-      .yellowX        (yellowXTile * TILE_SIZE),
-      .yellowY        (yellowYTile * TILE_SIZE),
+      .userX         (userXTile * TILE_SIZE),
+      .userY         (userYTile * TILE_SIZE),
+      .botX        (botXTile * TILE_SIZE),
+      .botY        (botYTile * TILE_SIZE),
       .wall_tiles     (wall_tiles),
       .breakable_tiles(breakable_tiles),
       .bomb_tiles     (bomb_tiles),
       .oledColour     (pixel_data)
   );
 
-  is_collision is_wall_green (
-      .x_cur(greenXTile),
-      .y_cur(greenYTile),
+  is_collision is_wall_user (
+      .x_cur(userXTile),
+      .y_cur(userYTile),
       .wall_tiles(wall_tiles),
       .breakable_tiles(breakable_tiles),
-      .direction(green_move),
+      .direction(user_move),
       .en(en),
       .x_out(newGreenXTile),
       .y_out(newGreenYTile)
   );
 
-  is_collision is_wall_yellow (
-      .x_cur(yellowXTile),
-      .y_cur(yellowYTile),
+  is_collision is_wall_bot (
+      .x_cur(botXTile),
+      .y_cur(botYTile),
       .wall_tiles(wall_tiles),
       .breakable_tiles(breakable_tiles),
-      .direction(yellow_move),
+      .direction(bot_move),
       .en(en),
       .x_out(newYellowXTile),
       .y_out(newYellowYTile)
@@ -94,12 +94,12 @@ module Map (
 
   // Initialization block           
   initial begin
-    greenXTile     = GREEN_X_TILE;
-    greenYTile     = GREEN_Y_TILE;
-    yellowXTile    = YELLOW_X_TILE;
-    yellowYTile    = YELLOW_Y_TILE;
-    green_move     = 0;
-    yellow_move    = 0;
+    userXTile     = GREEN_X_TILE;
+    userYTile     = GREEN_Y_TILE;
+    botXTile    = YELLOW_X_TILE;
+    botYTile    = YELLOW_Y_TILE;
+    user_move     = 0;
+    bot_move    = 0;
     bomb_tiles     = 0;
     bomb_countdown = 0;
     dropBomb       = 0;
@@ -108,13 +108,12 @@ module Map (
 
   // Clock division and input processing
   always @(posedge clk) begin
-    green_move <= en ? (btnU ? 1 : (btnR ? 2 : (btnD ? 3 : (btnL ? 4 : 0)))) : 0;
-
+    user_move <= en ? (btnU ? 1 : (btnR ? 2 : (btnD ? 3 : (btnL ? 4 : 0)))) : 0;
     dropBomb   <= en ? (bomb_countdown == 10) ? 0 : dropBomb | btnC : 0;
 
     // Set bomb at current position when center button pressed
     if (en && btnC) begin
-      bomb_tiles <= bomb_tiles | (1 << ((greenYTile) * GRID_WIDTH + (greenXTile)));
+      bomb_tiles <= bomb_tiles | (1 << ((userYTile) * GRID_WIDTH + (userXTile)));
     end else if (bomb_countdown == 0) begin
       bomb_tiles <= 0;
     end else begin
@@ -126,13 +125,13 @@ module Map (
     random_seed <= {
       random_seed[14:0], random_seed[15] ^ random_seed[13] ^ random_seed[12] ^ random_seed[10]
     };
-    greenXTile <= en ? newGreenXTile : GREEN_X_TILE;
-    greenYTile <= en ? newGreenYTile : GREEN_Y_TILE;
+    userXTile <= en ? newGreenXTile : GREEN_X_TILE;
+    userYTile <= en ? newGreenYTile : GREEN_Y_TILE;
 
-    yellowXTile <= en ? newYellowXTile : YELLOW_X_TILE;
-    yellowYTile <= en ? newYellowYTile : YELLOW_Y_TILE;
+    botXTile <= en ? newYellowXTile : YELLOW_X_TILE;
+    botYTile <= en ? newYellowYTile : YELLOW_Y_TILE;
 
-    yellow_move <= en ? (random_seed[1:0] + 1) : 0;
+    bot_move <= en ? (random_seed[1:0] + 1) : 0;
     bomb_countdown <= dropBomb ? 10 : bomb_countdown > 0 ? bomb_countdown - 1 : 0;
   end
 
