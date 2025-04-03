@@ -21,14 +21,14 @@ module ascii_rom (
         // Initialize with simple patterns for testing
         
         // Pattern for digit '0' (0x30)
-        ascii_patterns[7'h30][0] = 8'b00111100;
+        ascii_patterns[7'h30][0] = 8'b01111110;
         ascii_patterns[7'h30][1] = 8'b01100110;
         ascii_patterns[7'h30][2] = 8'b01100110;
         ascii_patterns[7'h30][3] = 8'b01100110;
         ascii_patterns[7'h30][4] = 8'b01100110;
         ascii_patterns[7'h30][5] = 8'b01100110;
         ascii_patterns[7'h30][6] = 8'b01100110;
-        ascii_patterns[7'h30][7] = 8'b00111100;
+        ascii_patterns[7'h30][7] = 8'b01111110;
         ascii_patterns[7'h30][8:15] = {8{8'h00}};
         
         // Pattern for digit '1' (0x31)
