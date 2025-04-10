@@ -233,65 +233,53 @@ module enemy_movement (
         flee_counter <= flee_counter + 1;
 
         if (bomb1_en && bomb2_en && (bomb1_x == botX || bomb2_x == botX)) begin
-          // When both bombs are active and on same X as bot
-          case (random_number[1:0])
-            2'b00:
-            if (!is_collision(botX - 1, botY) && !is_bomb_location(botX - 1, botY))
-              direction <= LEFT;
-            2'b01:
-            if (!is_collision(botX + 1, botY) && !is_bomb_location(botX + 1, botY))
-              direction <= RIGHT;
-            2'b10:
-            if (!is_collision(botX, botY + 1) && !is_bomb_location(botX, botY + 1))
-              direction <= DOWN;
-            2'b11:
-            if (!is_collision(botX, botY - 1) && !is_bomb_location(botX, botY - 1)) direction <= UP;
-          endcase
+          // When both bombs are active and on same X as bot, prioritize UP/DOWN movement
+          if (!is_collision(botX, botY - 1) && !is_bomb_location(botX, botY - 1))
+            direction <= UP;
+          else if (!is_collision(botX, botY + 1) && !is_bomb_location(botX, botY + 1))
+            direction <= DOWN;
+          else if (!is_collision(botX - 1, botY) && !is_bomb_location(botX - 1, botY))
+            direction <= LEFT;
+          else if (!is_collision(botX + 1, botY) && !is_bomb_location(botX + 1, botY))
+            direction <= RIGHT;
+          else 
+            direction <= NO_MOVE;
         end else if (bomb1_en && bomb2_en && (bomb1_y == botY || bomb2_y == botY)) begin
-          // When both bombs are active and on same Y as bot
-          case (random_number[1:0])
-            2'b00:
-            if (!is_collision(botX, botY - 1) && !is_bomb_location(botX, botY - 1)) direction <= UP;
-            2'b01:
-            if (!is_collision(botX, botY + 1) && !is_bomb_location(botX, botY + 1))
-              direction <= DOWN;
-            2'b10:
-            if (!is_collision(botX - 1, botY) && !is_bomb_location(botX - 1, botY))
-              direction <= LEFT;
-            2'b11:
-            if (!is_collision(botX + 1, botY) && !is_bomb_location(botX + 1, botY))
-              direction <= RIGHT;
-          endcase
+          // When both bombs are active and on same Y as bot, prioritize LEFT/RIGHT movement
+          if (!is_collision(botX - 1, botY) && !is_bomb_location(botX - 1, botY))
+            direction <= LEFT;
+          else if (!is_collision(botX + 1, botY) && !is_bomb_location(botX + 1, botY))
+            direction <= RIGHT;
+          else if (!is_collision(botX, botY - 1) && !is_bomb_location(botX, botY - 1))
+            direction <= UP;
+          else if (!is_collision(botX, botY + 1) && !is_bomb_location(botX, botY + 1))
+            direction <= DOWN;
+          else
+            direction <= NO_MOVE;
         end else if (bomb1_x == botX || bomb2_x == botX) begin
-          // When one bomb is on same X as bot
-          case (random_number[1:0])
-            2'b00:
-            if (!is_collision(botX - 1, botY) && !is_bomb_location(botX - 1, botY))
-              direction <= LEFT;
-            2'b01:
-            if (!is_collision(botX + 1, botY) && !is_bomb_location(botX + 1, botY))
-              direction <= RIGHT;
-            2'b10:
-            if (!is_collision(botX, botY + 1) && !is_bomb_location(botX, botY + 1))
-              direction <= DOWN;
-            2'b11:
-            if (!is_collision(botX, botY - 1) && !is_bomb_location(botX, botY - 1)) direction <= UP;
-          endcase
+          // When one bomb is on same X as bot, prioritize UP/DOWN movement
+          if (!is_collision(botX, botY - 1) && !is_bomb_location(botX, botY - 1))
+            direction <= UP;
+          else if (!is_collision(botX, botY + 1) && !is_bomb_location(botX, botY + 1))
+            direction <= DOWN;
+          else if (!is_collision(botX - 1, botY) && !is_bomb_location(botX - 1, botY))
+            direction <= LEFT;
+          else if (!is_collision(botX + 1, botY) && !is_bomb_location(botX + 1, botY))
+            direction <= RIGHT;
+          else
+            direction <= NO_MOVE;
         end else if (bomb1_y == botY || bomb2_y == botY) begin
-          // When one bomb is on same Y as bot
-          case (random_number[1:0])
-            2'b00:
-            if (!is_collision(botX, botY - 1) && !is_bomb_location(botX, botY - 1)) direction <= UP;
-            2'b01:
-            if (!is_collision(botX, botY + 1) && !is_bomb_location(botX, botY + 1))
-              direction <= DOWN;
-            2'b10:
-            if (!is_collision(botX - 1, botY) && !is_bomb_location(botX - 1, botY))
-              direction <= LEFT;
-            2'b11:
-            if (!is_collision(botX + 1, botY) && !is_bomb_location(botX + 1, botY))
-              direction <= RIGHT;
-          endcase
+          // When one bomb is on same Y as bot, prioritize LEFT/RIGHT movement
+          if (!is_collision(botX - 1, botY) && !is_bomb_location(botX - 1, botY))
+            direction <= LEFT;
+          else if (!is_collision(botX + 1, botY) && !is_bomb_location(botX + 1, botY))
+            direction <= RIGHT;
+          else if (!is_collision(botX, botY - 1) && !is_bomb_location(botX, botY - 1))
+            direction <= UP;
+          else if (!is_collision(botX, botY + 1) && !is_bomb_location(botX, botY + 1))
+            direction <= DOWN;
+          else
+            direction <= NO_MOVE;
         end
       end
     endcase

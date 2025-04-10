@@ -54,7 +54,6 @@ module drawCordinate (
 
   wire isWall = wall_tiles[tileIndex];
   wire isBreakable = breakable_tiles[tileIndex];
-  wire isBomb = bomb_tiles[tileIndex];
   
   wire [2:0] localX = pixelX % TILE_WIDTH; // IDKY but duplicating this fixes the orientation problem for objects
   wire [2:0] localY = pixelY % TILE_HEIGHT;
