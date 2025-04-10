@@ -19,24 +19,15 @@ module drawCordinate (
 
   import sprites::*;
 
-  parameter BLACK       = 16'h0000;
-  parameter RED         = 16'hF800;
-  parameter WHITE       = 16'hFFFF;
-  parameter GREEN       = 16'h07E0;
-  parameter BLUE        = 16'h001F;
-  parameter YELLOW      = 16'hFFE0;
-  parameter BOMB_GREY   = 16'ha554;
-  parameter BOMB_ORANGE = 16'ha554;
-  parameter HEART_RED   = 16'hfa20;
-  
-
   parameter TILE_WIDTH = 8;  // 96/12 = 8 pixels per tile width
   parameter TILE_HEIGHT = 8;  // 64/8 = 8 pixels per tile height
   parameter GRID_WIDTH = 12;
   parameter GRID_HEIGHT = 8;
 
   wire [15:0] userSquareColour;
-  wire [15:0] botSquareColour;  // new wire for bot square
+  wire [15:0] botSquareColour;
+  wire [15:0] bombSquareColour_1;
+  wire [15:0] bombSquareColour_2;
   wire [15:0] objectColour;
 
   // Calculate current pixel coordinates
@@ -72,16 +63,17 @@ module drawCordinate (
 
   assign isBomb = isPlayerBomb || isEnemyBomb;
 
+  parameter BLACK_COLOUR = 16'h0000;  // Black
+
   // Assign color based on tile type: bomb has highest priority.
-  assign objectColour = isBomb ? WHITE : 
-                        (~wallActive & isWall ? BLUE : 
-                        (~brickActive & isBreakable ? RED : BLACK));
+  assign objectColour = ~wallActive & isWall ? WALL_COLOUR : 
+                        (~brickActive & isBreakable ? BRICK_COLOUR : BLACK_COLOUR);
 
   // Instantiate drawSquare for user and bot blocks
   drawSquare #(8) userSquare (
       .x(userX),
       .y(userY),
-      .colour(GREEN),
+      .colour(CAT_COLOUR),
       .squareData(CAT_SPRITE_DATA),
       .cordinateIndex(cordinateIndex),
       .oledColour(userSquareColour)
@@ -90,12 +82,33 @@ module drawCordinate (
   drawSquare #(8) botSquare (
       .x(botX),
       .y(botY),
-      .colour(YELLOW),
+      .colour(DINO_COLOUR),
       .squareData(DINO_SPRITE_DATA),
       .cordinateIndex(cordinateIndex),
       .oledColour(botSquareColour)
   );
 
+  drawSquare #(8) bombSquare_1 (
+      .x(bombX),
+      .y(bombY),
+      .colour(BOMB_GREY),
+      .squareData(BOMB_SPRITE_DATA),
+      .cordinateIndex(cordinateIndex),
+      .oledColour(bombSquareColour_1)
+  );
+
+  drawSquare #(8) bombSquare_2 (
+      .x(bomb_enemy_x),
+      .y(bomb_enemy_y),
+      .colour(BOMB_ORANGE),
+      .squareData(BOMB_SPRITE_DATA),
+      .cordinateIndex(cordinateIndex),
+      .oledColour(bombSquareColour_2)
+  );
+
   // Combine elements with priority: bot, user, then wall
-  assign oledColour = botSquareColour | userSquareColour | objectColour;
+  assign oledColour = botSquareColour | userSquareColour | 
+                     (bomb_en ? bombSquareColour_1 : BLACK_COLOUR) | 
+                     (bomb_en_enemy ? bombSquareColour_2 : BLACK_COLOUR) | 
+                     objectColour;
 endmodule
