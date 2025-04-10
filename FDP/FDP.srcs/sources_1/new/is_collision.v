@@ -1,21 +1,21 @@
 `timescale 1ns / 1ps
 
 module is_collision (
-    input [7:0] x_cur,
-    input [7:0] y_cur,
+    input [3:0] x_cur,
+    input [3:0] y_cur,
     input [95:0] wall_tiles,
     input [95:0] breakable_tiles,
     input [2:0] direction,
     input en,
-    output reg [7:0] x_out,
-    output reg [7:0] y_out
+    output reg [3:0] x_out,
+    output reg [3:0] y_out
 );
 
   parameter width = 12;
   parameter height = 8;
 
-  reg signed [7:0] x_new;
-  reg signed [7:0] y_new;
+  reg signed [4:0] x_new;
+  reg signed [4:0] y_new;
 
   reg is_collision;
   reg is_edge;

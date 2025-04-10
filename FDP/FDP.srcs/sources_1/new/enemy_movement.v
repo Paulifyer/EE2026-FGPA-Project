@@ -3,16 +3,13 @@
 module enemy_movement (
     input clk,
     input en,
-    input [9:0] botX,
-    input [9:0] botY,
-    input [9:0] userX,
-    input [9:0] userY,
-    input [9:0] bomb1_x,
-    input [9:0] bomb1_y,
-    input bomb1_en,
-    input [9:0] bomb2_x,
-    input [9:0] bomb2_y,
-    input bomb2_en,
+    input [3:0] botX,
+    input [3:0] botY,
+    input [3:0] userX,
+    input [3:0] userY,
+    input [3:0] bomb_X[1:0],
+    input [3:0] bomb_Y[1:0],
+    input bomb_en[1:0],
     input [95:0] wall_tiles,
     input [95:0] breakable_tiles,
     input [15:0] random_number,
@@ -46,22 +43,22 @@ module enemy_movement (
   reg [1:0] patrol_after_flee_counter = 0;  // Counter to track PATROLLING cycles after FLEEING
 
   // Position and movement tracking
-  reg [9:0] new_botX;
-  reg [9:0] new_botY;
+  reg [3:0] new_botX;
+  reg [3:0] new_botY;
 
   // Distance calculation to player
-  wire [9:0] dx_player = (botX > userX) ? (botX - userX) : (userX - botX);
-  wire [9:0] dy_player = (botY > userY) ? (botY - userY) : (userY - botY);
-  wire [9:0] dist_to_player = dx_player + dy_player;
+  wire [3:0] dx_player = (botX > userX) ? (botX - userX) : (userX - botX);
+  wire [3:0] dy_player = (botY > userY) ? (botY - userY) : (userY - botY);
+  wire [3:0] dist_to_player = dx_player + dy_player;
 
   // Bomb danger detection
-  wire in_bomb1_danger = bomb1_en ? (botX == bomb1_x || botY == bomb1_y) : 0;
-  wire in_bomb2_danger = bomb2_en ? (botX == bomb2_x || botY == bomb2_y) : 0;
+  wire in_bomb1_danger = bomb_en[0] ? (botX == bomb_X[0] || botY == bomb_Y[0]) : 0;
+  wire in_bomb2_danger = bomb_en[1] ? (botX == bomb_X[1] || botY == bomb_Y[1]) : 0;
   wire in_bomb_danger = in_bomb1_danger | in_bomb2_danger;
 
   // Collision detection function
   function is_collision;
-    input [9:0] test_x, test_y;
+    input [3:0] test_x, test_y;
     reg [5:0] tile_index;
     begin
       tile_index   = test_y * GRID_WIDTH + test_x;
@@ -71,16 +68,16 @@ module enemy_movement (
 
   // Helper function to detect if position is in bomb line
   function is_in_bomb_line;
-    input [9:0] test_x, test_y;
+    input [3:0] test_x, test_y;
     begin
-      is_in_bomb_line = (bomb1_en && (test_x == bomb1_x || test_y == bomb1_y)) || 
-                         (bomb2_en && (test_x == bomb2_x || test_y == bomb2_y));
+      is_in_bomb_line = (bomb_en[0] && (test_x == bomb_X[0] || test_y == bomb_Y[0])) || 
+                         (bomb_en[1] && (test_x == bomb_X[1] || test_y == bomb_Y[1]));
     end
   endfunction
 
   // Helper function to check if a move is safe (no collision, no bomb, and within map boundaries)
   function is_safe_move;
-    input [9:0] test_x, test_y;
+    input [3:0] test_x, test_y;
     begin
       is_safe_move = (test_x < GRID_WIDTH) && (test_y < GRID_HEIGHT) &&
           ~is_collision(test_x, test_y) && ~is_in_bomb_line(test_x, test_y);
