@@ -1,4 +1,4 @@
-module ScoreDisplay #(
+module ScoreOnPixel #(
     parameter SCORE_VOFFSET = 20,  // Vertical offset
     parameter SCORE_HOFFSET = 20   // Horizontal offset
 ) (
@@ -17,8 +17,8 @@ module ScoreDisplay #(
   parameter CHAR_HEIGHT = 16;  // ASCII character height
   parameter SCORE_SCALE_2N = 1;  // Scale factor as 2^n for better visibility
   parameter SCORE_NUM_DIGITS = 4;  // Number of score digits
-  parameter PREFIX_LENGTH    = 6;  // Length of prefix "SCORE:"
-  parameter TOTAL_CHARS      = PREFIX_LENGTH + SCORE_NUM_DIGITS;
+  parameter PREFIX_LENGTH = 6;  // Length of prefix "SCORE:"
+  parameter TOTAL_CHARS = PREFIX_LENGTH + SCORE_NUM_DIGITS;
   parameter SCREEN_WIDTH = 640;  // Total screen width
   parameter SCREEN_HEIGHT = 480;  // Total screen height
   parameter SCORE_REGION_WIDTH = TOTAL_CHARS * CHAR_STRIDE;
@@ -82,26 +82,26 @@ module ScoreDisplay #(
     if (stage1_in_region) begin
       if (digit_index_stage1 < PREFIX_LENGTH) begin
         case (digit_index_stage1)
-           4'd0: char_code_stage2 <= 7'h53; // 'S'
-           4'd1: char_code_stage2 <= 7'h43; // 'C'
-           4'd2: char_code_stage2 <= 7'h4F; // 'O'
-           4'd3: char_code_stage2 <= 7'h52; // 'R'
-           4'd4: char_code_stage2 <= 7'h45; // 'E'
-           4'd5: char_code_stage2 <= 7'h3A; // ':'
-           default: char_code_stage2 <= 0;
+          4'd0: char_code_stage2 <= 7'h53;  // 'S'
+          4'd1: char_code_stage2 <= 7'h43;  // 'C'
+          4'd2: char_code_stage2 <= 7'h4F;  // 'O'
+          4'd3: char_code_stage2 <= 7'h52;  // 'R'
+          4'd4: char_code_stage2 <= 7'h45;  // 'E'
+          4'd5: char_code_stage2 <= 7'h3A;  // ':'
+          default: char_code_stage2 <= 0;
         endcase
       end else begin
         case (digit_index_stage1 - PREFIX_LENGTH)
-           4'd0: char_value_stage2 <= s3;
-           4'd1: char_value_stage2 <= s2;
-           4'd2: char_value_stage2 <= s1;
-           4'd3: char_value_stage2 <= s0;
-           default: char_value_stage2 <= 0;
+          4'd0: char_value_stage2 <= s3;
+          4'd1: char_value_stage2 <= s2;
+          4'd2: char_value_stage2 <= s1;
+          4'd3: char_value_stage2 <= s0;
+          default: char_value_stage2 <= 0;
         endcase
         char_code_stage2 <= 7'h30 + char_value_stage2;
       end
       char_row_stage2 <= (y_pos_stage1 >> SCORE_SCALE_2N) & (CHAR_HEIGHT - 1);
-      bit_pos_stage2  <= (rem_x_stage1 - 1) >> SCORE_SCALE_2N;
+      bit_pos_stage2 <= (rem_x_stage1 - 1) >> SCORE_SCALE_2N;
       in_char_area_stage2 <= (rem_x_stage1 < EFFECTIVE_CHAR_WIDTH);
       rom_addr_stage2 <= {char_code_stage2, char_row_stage2};
     end
