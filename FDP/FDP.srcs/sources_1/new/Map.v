@@ -33,17 +33,17 @@ module Map (
   wire clk1p0;  // 1Hz clock for movement updates
 
   // Player and enemy position registers
-  reg [7:0] userXTile, userYTile, botXTile, botYTile;
-  wire [7:0] newGreenXTile, newGreenYTile, newYellowXTile, newYellowYTile;
+  reg [3:0] userXTile, userYTile, botXTile, botYTile;
+  wire [3:0] newGreenXTile, newGreenYTile, newYellowXTile, newYellowYTile;
 
   // Movement signals
   reg  [2:0] user_move;  // 1: up, 2: right, 3: down, 4: left
   wire [2:0] bot_move_wire;  // Bot movement wire from AI
 
   // Bomb management
-  reg [7:0] bombX, bombY, bombX_enemy, bombY_enemy;
+  reg [3:0] bombX[1:0], bombY[1:0];
+  reg bomb_en[1:0];
   reg [3:0] bomb_countdown, bomb_countdown_enemy;
-  reg bomb1_en, bomb2_en;
   wire dropBomb, dropBomb_enemy;
   reg [2:0] player_bombs_count = 4, enemy_bombs_count = 4;
 
@@ -84,12 +84,9 @@ module Map (
       .botY(botYTile * TILE_SIZE),
       .wall_tiles(wall_tiles),
       .breakable_tiles(breakable_tiles),
-      .BOMB1_en(bomb1_en),
-      .BOMB1_X(bombX * TILE_SIZE),
-      .BOMB1_Y(bombY * TILE_SIZE),
-      .BOMB2_en(bomb2_en),
-      .BOMB2_X(bombX_enemy * TILE_SIZE),
-      .BOMB2_Y(bombY_enemy * TILE_SIZE),
+      .bomb_en({bomb_en[0], bomb_en[1]}),
+      .bomb_X({bombX[0] * TILE_SIZE, bombX[1] * TILE_SIZE}),
+      .bomb_Y({bombY[0] * TILE_SIZE, bombY[1] * TILE_SIZE}),
       .oledColour(pixel_data)
   );
 
@@ -125,12 +122,9 @@ module Map (
       .botY(botYTile),
       .userX(userXTile),
       .userY(userYTile),
-      .bomb1_x(bombX),
-      .bomb1_y(bombY),
-      .bomb2_x(bombX_enemy),
-      .bomb2_y(bombY_enemy),
-      .bomb1_en(bomb1_en),
-      .bomb2_en(bomb2_en),
+      .bomb_en({bomb_en[0], bomb_en[1]}),
+      .bomb_X({bombX[0], bombX[1]}),
+      .bomb_Y({bombY[0], bombY[1]}),
       .wall_tiles(wall_tiles),
       .breakable_tiles(breakable_tiles),
       .random_number(random_seed),
@@ -148,8 +142,8 @@ module Map (
     user_move = 0;
     bomb_countdown = 0;
     bomb_countdown_enemy = 0;
-    bomb1_en = 0;
-    bomb2_en = 0;
+    bomb_en[0] = 0;
+    bomb_en[1] = 0;
     random_seed = 16'hACE1;
   end
 
@@ -160,8 +154,6 @@ module Map (
   // Input processing and bomb management (fast clock domain)
   always @(posedge clk) begin
     if (en) begin
-     
-
       btnC_prev <= btnC_debounced;
       btnC_enemy_prev <= btnC_enemy;
 
@@ -170,35 +162,35 @@ module Map (
 
       // Handle player bomb placement
       if (dropBomb) begin
-        bombX <= userXTile;
-        bombY <= userYTile;
-        bomb1_en <= 1;
+        bombX[0] <= userXTile;
+        bombY[0] <= userYTile;
+        bomb_en[0] <= 1;
         player_bombs_count <= player_bombs_count - 1;
       end
 
       // Handle enemy bomb placement
       if (dropBomb_enemy) begin
-        bombX_enemy <= botXTile;
-        bombY_enemy <= botYTile;
-        bomb2_en <= 1;
+        bombX[1] <= botXTile;
+        bombY[1] <= botYTile;
+        bomb_en[1] <= 1;
         enemy_bombs_count <= enemy_bombs_count - 1;
       end
 
       // Reset bomb status when countdown reaches zero
-      if (bomb_countdown == 0) bomb1_en <= 0;
-      if (bomb_countdown_enemy == 0) bomb2_en <= 0;
+      if (bomb_countdown == 0) bomb_en[0] <= 0;
+      if (bomb_countdown_enemy == 0) bomb_en[1] <= 0;
     end
   end
 
   // Game state updates (slow clock domain)
   always @(posedge clk1p0) begin
     // Update bomb countdown timers
-     random_seed <= {
+    random_seed <= {
         random_seed[14:0], random_seed[15] ^ random_seed[13] ^ random_seed[12] ^ random_seed[10]
       };
       
-    bomb_countdown <= bomb1_en ? bomb_countdown - 1 : 10;
-    bomb_countdown_enemy <= bomb2_en ? bomb_countdown_enemy - 1 : 10;
+    bomb_countdown <= bomb_en[0] ? bomb_countdown - 1 : 10;
+    bomb_countdown_enemy <= bomb_en[1] ? bomb_countdown_enemy - 1 : 10;
 
     // Update player positions
     userXTile <= en ? newGreenXTile : GREEN_X_TILE;

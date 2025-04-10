@@ -6,14 +6,14 @@ module is_collision_tb();
     parameter height = 8;
     
     // Inputs
-    reg [7:0] x1;
-    reg [7:0] y1;
+    reg [3:0] x1;
+    reg [3:0] y1;
     reg [95:0] wall_tiles;
     reg [2:0] direction;
     
     // Outputs
-    wire [7:0] x_out;
-    wire [7:0] y_out;
+    wire [3:0] x_out;
+    wire [3:0] y_out;
     
     // Instantiate the Unit Under Test (UUT)
     is_collision uut (

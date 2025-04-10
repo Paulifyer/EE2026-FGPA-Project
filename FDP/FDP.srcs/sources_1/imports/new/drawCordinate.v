@@ -4,16 +4,13 @@ module drawCordinate (
     input [12:0] cordinateIndex,
     input [7:0] userX,
     input [7:0] userY,
-    input BOMB1_en,
-    input BOMB2_en,
     input [7:0] botX,
     input [7:0] botY,
     input [95:0] wall_tiles,
     input [95:0] breakable_tiles,
-    input [7:0] BOMB1_X,
-    input [7:0] BOMB1_Y,
-    input [7:0] BOMB2_X,
-    input [7:0] BOMB2_Y,
+    input [7:0] bomb_X[1:0],
+    input [7:0] bomb_Y[1:0],
+    input bomb_en[1:0],
     output [15:0] oledColour
 );
 
@@ -56,12 +53,12 @@ module drawCordinate (
 
   // Calculate if the current pixel matches any bomb's position (player or enemy)
   wire isBomb;
-  wire isBOMB1 = BOMB1_en ? (pixelX >= BOMB1_X && pixelX < (BOMB1_X + TILE_WIDTH)) &&
-                     (pixelY >= BOMB1_Y && pixelY < (BOMB1_Y + TILE_HEIGHT)) : 0;
-  wire isBOMB2 = BOMB2_en ? (pixelX >= BOMB2_X && pixelX < (BOMB2_X + TILE_WIDTH)) &&
-                    (pixelY >= BOMB2_Y && pixelY < (BOMB2_Y + TILE_HEIGHT)) : 0;
+  wire isbomb1 = bomb_en[0] ? (pixelX >= bomb_X[0] && pixelX < (bomb_X[0] + TILE_WIDTH)) &&
+                     (pixelY >= bomb_Y[0] && pixelY < (bomb_Y[0] + TILE_HEIGHT)) : 0;
+  wire isbomb2 = bomb_en[1] ? (pixelX >= bomb_X[1] && pixelX < (bomb_X[1] + TILE_WIDTH)) &&
+                    (pixelY >= bomb_Y[1] && pixelY < (bomb_Y[1] + TILE_HEIGHT)) : 0;
 
-  assign isBomb = isBOMB1 || isBOMB2;
+  assign isBomb = isbomb1 || isbomb2;
 
   parameter BLACK_COLOUR = 16'h0000;  // Black
 
@@ -89,8 +86,8 @@ module drawCordinate (
   );
 
   drawSquare #(8) bombSquare_1 (
-      .x(BOMB1_X),
-      .y(BOMB1_Y),
+      .x(bomb_X[0]),
+      .y(bomb_Y[0]),
       .colour(BOMB_GREY),
       .squareData(BOMB_SPRITE_DATA),
       .cordinateIndex(cordinateIndex),
@@ -98,8 +95,8 @@ module drawCordinate (
   );
 
   drawSquare #(8) bombSquare_2 (
-      .x(BOMB2_X),
-      .y(BOMB2_Y),
+      .x(bomb_X[1]),
+      .y(bomb_Y[1]),
       .colour(BOMB_ORANGE),
       .squareData(BOMB_SPRITE_DATA),
       .cordinateIndex(cordinateIndex),
@@ -108,7 +105,7 @@ module drawCordinate (
 
   // Combine elements with priority: bot, user, then wall
   assign oledColour = botSquareColour | userSquareColour | 
-                     (BOMB1_en ? bombSquareColour_1 : BLACK_COLOUR) | 
-                     (BOMB2_en ? bombSquareColour_2 : BLACK_COLOUR) | 
+                     (bomb_en[0] ? bombSquareColour_1 : BLACK_COLOUR) | 
+                     (bomb_en[1] ? bombSquareColour_2 : BLACK_COLOUR) | 
                      objectColour;
 endmodule
