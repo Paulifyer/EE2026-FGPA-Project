@@ -46,8 +46,9 @@ module Map (
   /*reg  [95:0] bomb_tiles;  // Bomb placement bitmap
   reg  [ 3:0] bomb_countdown;  // Countdown
   reg         dropBomb;*/
-  wire [6:0] player_index;
-  wire [20:0] bomb_tiles;
+  wire [6:0] player_index, previous_player_index;
+  wire [20:0] bomb_tiles, bomb_tiles_1;
+  reg [20:0] other_bomb_tiles = {7'd127,7'd127,7'd127};
   wire [95:0] after_break_tiles;
   assign player_index = (greenYTile) * GRID_WIDTH + (greenXTile);
   reg [2:0] bomb_limit = 3, bomb_range = 3;
@@ -67,8 +68,9 @@ module Map (
   );
 
   // Module instantiation
-  bomb boom(clk,btnC,en,push_bomb_ability,wall_tiles,breakable_tiles,player_index,player_health,bomb_limit,bomb_range,bomb_time,after_break_tiles,bomb_tiles,led);
-  
+  bomb boom (clk,btnC,en,push_bomb_ability,wall_tiles,breakable_tiles,other_bomb_tiles,player_index,player_health,bomb_limit,bomb_range,bomb_time,after_break_tiles,bomb_tiles,led);
+//  push_bomb_power pushh (clk, push_bomb_ability,player_index,bomb_tiles_1,wall_tiles,after_break_tiles,bomb_tiles);
+
   drawCordinate draw (
       .cordinateIndex (pixel_index),
       .greenX         (greenXTile * TILE_SIZE),
