@@ -45,7 +45,7 @@ module Top_Student (
   reg  [ 7:0] current_key;
 
   //   assign led = current_key;
-  assign led[15:4] = 12'h000;
+  assign led[11:4] = 12'h000;
 
   wire key_W, key_A, key_S, key_D, key_B, key_ENTER;
 
@@ -137,6 +137,7 @@ module Top_Student (
       .en(state),
       .pixel_index(pixel_index),
       .wall_tiles(wall_tiles),
+      .bombs(led[15:12]),
       .led(led[3:0]),
       .breakable_tiles(breakable_tiles),
       .pixel_data(oled_game_map)

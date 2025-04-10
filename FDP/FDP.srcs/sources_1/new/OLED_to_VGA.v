@@ -116,10 +116,10 @@ module OLED_to_VGA (
   parameter SCORE_HOFFSET = 125;  // Left offset for score display
 
   // Instantiate the score module with custom offsets:
-  ScoreOnPixel #(
+  ScoreDisplay #(
       .SCORE_VOFFSET(SCORE_VOFFSET),
       .SCORE_HOFFSET(SCORE_HOFFSET) 
-  ) sp_inst (
+  ) score_inst (
       .clk            (clk),
       .x_in           (x),
       .y_in           (y),
@@ -130,6 +130,9 @@ module OLED_to_VGA (
       .in_score_region(is_in_score_area),
       .pixel_on       (score_pixel_active)
   );
+  
+  BombDisplay bomb_inst ();
+  HealthDisplay health_inst ();
 
 
   always @(posedge clk) begin

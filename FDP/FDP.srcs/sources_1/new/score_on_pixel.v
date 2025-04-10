@@ -1,4 +1,4 @@
-module ScoreOnPixel #(
+module ScoreDisplay #(
     parameter SCORE_VOFFSET = 20,  // Vertical offset
     parameter SCORE_HOFFSET = 20   // Horizontal offset
 ) (
