@@ -63,4 +63,28 @@ package sprites;
         8'b10100101,
         8'b10100101
     };
+    
+        // Heart sprite data
+    parameter HEART_SPRITE_DATA = {
+        8'b01100110,
+        8'b11111111,
+        8'b11111111,
+        8'b11111111,
+        8'b11111111,
+        8'b01111110,
+        8'b00111100,
+        8'b00011000
+    };
+    
+        // Bomb sprite data
+    parameter BOMB_SPRITE_DATA = {
+        8'b00000000,
+        8'b00001100,
+        8'b00010000,
+        8'b00111000,
+        8'b01111100,
+        8'b01111100,
+        8'b01111100,
+        8'b00111000
+    };
 endpackage

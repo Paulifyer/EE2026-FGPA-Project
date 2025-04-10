@@ -14,12 +14,16 @@ module drawCordinate (
 
 import sprites::*;
 
-  parameter BLACK  = 16'h0000;
-  parameter RED    = 16'hF800;
-  parameter WHITE  = 16'hFFFF;
-  parameter GREEN  = 16'h07E0;
-  parameter BLUE   = 16'h001F;
-  parameter YELLOW = 16'hFFE0;
+  parameter BLACK       = 16'h0000;
+  parameter RED         = 16'hF800;
+  parameter WHITE       = 16'hFFFF;
+  parameter GREEN       = 16'h07E0;
+  parameter BLUE        = 16'h001F;
+  parameter YELLOW      = 16'hFFE0;
+  parameter BOMB_GREY   = 16'ha554;
+  parameter BOMB_ORANGE = 16'ha554;
+  parameter HEART_RED   = 16'hfa20;
+  
 
   parameter TILE_WIDTH  = 8;  // 96/12 = 8 pixels per tile width
   parameter TILE_HEIGHT = 8;  // 64/8 = 8 pixels per tile height
