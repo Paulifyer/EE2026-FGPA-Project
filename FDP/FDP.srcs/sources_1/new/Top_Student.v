@@ -42,10 +42,10 @@ module Top_Student (
   wire [95:0] breakable_tiles;
 
   reg  [15:0] score;
-  reg  [7:0] current_key;
+  reg  [ 7:0] current_key;
 
-//   assign led = current_key;
-    assign led = 16'h0000;
+  //   assign led = current_key;
+  assign led[15:4] = 12'h000;
 
   wire key_W, key_A, key_S, key_D, key_B, key_ENTER;
 
@@ -74,13 +74,13 @@ module Top_Student (
       .clk(clk),
       .PS2Data(PS2Data),
       .PS2Clk(PS2Clk),
-        .pressed_key(current_key),
+      .pressed_key(current_key),
       .key_W(key_W),
       .key_A(key_A),
       .key_S(key_S),
       .key_D(key_D),
       .key_B(key_B),
-        .key_ENTER(key_ENTER)
+      .key_ENTER(key_ENTER)
   );
 
   Score_Display s1 (
@@ -135,9 +135,10 @@ module Top_Student (
       .btnR(btnR | key_D),
       .btnC(btnC | key_B),
       .en(state),
-      .wall_tiles(wall_tiles),
-      .breakable_tiles(breakable_tiles),
       .pixel_index(pixel_index),
+      .wall_tiles(wall_tiles),
+      .led(led[3:0]),
+      .breakable_tiles(breakable_tiles),
       .pixel_data(oled_game_map)
   );
 
