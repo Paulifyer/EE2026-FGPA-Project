@@ -151,6 +151,7 @@ module Top_Student (
       .pixel_index(pixel_index),
       .hsync(hsync),
       .vsync(vsync),
+      .bombs(led[15:12]),
       .rgb(rgb)
   );
 

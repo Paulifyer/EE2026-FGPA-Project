@@ -22,26 +22,41 @@ module Map (
   parameter GRID_HEIGHT = 8;  // 8 tiles vertically
   parameter SCREEN_WIDTH = 96;  // Screen width in pixels
   parameter SCREEN_HEIGHT = 64;  // Screen height in pixels
+
+  // Starting positions
   parameter GREEN_X_TILE = 0;
   parameter GREEN_Y_TILE = 4;
   parameter YELLOW_X_TILE = 3;
   parameter YELLOW_Y_TILE = 6;
 
-  // Registers and Wires
-  reg  [2:0] user_move;  // 1: up, 2: right, 3: down, 4: left
-  wire [2:0] bot_move_wire;  // Bot movement wire
+  // Clock signals
+  wire clk1p0;  // 1Hz clock for movement updates
+
+  // Player and enemy position registers
   reg [7:0] userXTile, userYTile, botXTile, botYTile;
   wire [7:0] newGreenXTile, newGreenYTile, newYellowXTile, newYellowYTile;
+
+  // Movement signals
+  reg  [2:0] user_move;  // 1: up, 2: right, 3: down, 4: left
+  wire [2:0] bot_move_wire;  // Bot movement wire from AI
+
+  // Bomb management
   reg [7:0] bombX, bombY, bombX_enemy, bombY_enemy;
   reg [3:0] bomb_countdown, bomb_countdown_enemy;
+  reg bomb1_en, bomb2_en;
   wire dropBomb, dropBomb_enemy;
-  reg bomb1_en, bomb1_enemy_en;
-  wire btnC_enemy;
-  reg [15:0] random_seed;
   reg [2:0] player_bombs_count = 4, enemy_bombs_count = 4;
-  wire clk1p0;
 
-  // Clock Divider
+  // Button management
+  wire btnC_debounced;
+  reg btnC_prev, btnC_enemy_prev;
+  wire btnC_posedge, btnC_enemy_posedge;
+  wire btnC_enemy;
+
+  // Random number generation
+  reg [15:0] random_seed;
+
+  // Clock Divider for game timing
   slow_clock c1 (
       .clk(clk),
       .period(1_0000_0000),
@@ -49,20 +64,18 @@ module Map (
   );
 
   // Button Debounce and Edge Detection
-  wire btnC_debounced;
   switch_debounce debounce_btnC (
       .clk(clk),
-      .debound_count(50),
+      .debound_count(5000),
       .btn(btnC),
       .btn_state(btnC_debounced)
   );
 
-  reg btnC_prev, btnC_enemy_prev;
-  wire btnC_posedge, btnC_enemy_posedge;
+  // Button edge detection logic
   assign btnC_posedge = btnC_debounced & ~btnC_prev;
   assign btnC_enemy_posedge = btnC_enemy & ~btnC_enemy_prev;
 
-  // Module Instantiations
+  // Drawing logic for OLED display
   drawCordinate draw (
       .cordinateIndex(pixel_index),
       .userX(userXTile * TILE_SIZE),
@@ -71,15 +84,16 @@ module Map (
       .botY(botYTile * TILE_SIZE),
       .wall_tiles(wall_tiles),
       .breakable_tiles(breakable_tiles),
-      .bomb_en(bomb1_en),
-      .bombX(bombX * TILE_SIZE),
-      .bombY(bombY * TILE_SIZE),
-      .bomb_en_enemy(bomb1_enemy_en),
-      .bomb_enemy_x(bombX_enemy * TILE_SIZE),
-      .bomb_enemy_y(bombY_enemy * TILE_SIZE),
+      .BOMB1_en(bomb1_en),
+      .BOMB1_X(bombX * TILE_SIZE),
+      .BOMB1_Y(bombY * TILE_SIZE),
+      .BOMB2_en(bomb2_en),
+      .BOMB2_X(bombX_enemy * TILE_SIZE),
+      .BOMB2_Y(bombY_enemy * TILE_SIZE),
       .oledColour(pixel_data)
   );
 
+  // Collision detection for player
   is_collision is_wall_user (
       .x_cur(userXTile),
       .y_cur(userYTile),
@@ -91,6 +105,7 @@ module Map (
       .y_out(newGreenYTile)
   );
 
+  // Collision detection for enemy
   is_collision is_wall_bot (
       .x_cur(botXTile),
       .y_cur(botYTile),
@@ -102,6 +117,7 @@ module Map (
       .y_out(newYellowYTile)
   );
 
+  // Enemy AI movement controller
   enemy_movement enemy_move (
       .clk(clk1p0),
       .en(en),
@@ -114,7 +130,7 @@ module Map (
       .bomb2_x(bombX_enemy),
       .bomb2_y(bombY_enemy),
       .bomb1_en(bomb1_en),
-      .bomb2_en(bomb_countdown_enemy != 0),
+      .bomb2_en(bomb2_en),
       .wall_tiles(wall_tiles),
       .breakable_tiles(breakable_tiles),
       .random_number(random_seed),
@@ -133,20 +149,26 @@ module Map (
     bomb_countdown = 0;
     bomb_countdown_enemy = 0;
     bomb1_en = 0;
-    bomb1_enemy_en = 0;
+    bomb2_en = 0;
     random_seed = 16'hACE1;
   end
 
-  assign dropBomb = (en & player_bombs_count != 0) ? btnC_posedge : 0;
-  assign dropBomb_enemy = (en & enemy_bombs_count != 0) ? btnC_enemy_posedge : 0;
+  // Bomb placement logic
+  assign dropBomb = (en && player_bombs_count != 0) ? btnC_posedge : 0;
+  assign dropBomb_enemy = (en && enemy_bombs_count != 0) ? btnC_enemy_posedge : 0;
 
-  // Clock Division and Input Processing
+  // Input processing and bomb management (fast clock domain)
   always @(posedge clk) begin
     if (en) begin
+     
+
       btnC_prev <= btnC_debounced;
       btnC_enemy_prev <= btnC_enemy;
-      user_move <= en ? (btnU ? 1 : (btnR ? 2 : (btnD ? 3 : (btnL ? 4 : 0)))) : 0;
 
+      // Process directional input
+      user_move <= btnU ? 1 : (btnR ? 2 : (btnD ? 3 : (btnL ? 4 : 0)));
+
+      // Handle player bomb placement
       if (dropBomb) begin
         bombX <= userXTile;
         bombY <= userYTile;
@@ -154,34 +176,42 @@ module Map (
         player_bombs_count <= player_bombs_count - 1;
       end
 
+      // Handle enemy bomb placement
       if (dropBomb_enemy) begin
         bombX_enemy <= botXTile;
         bombY_enemy <= botYTile;
-        bomb1_enemy_en <= 1;
+        bomb2_en <= 1;
         enemy_bombs_count <= enemy_bombs_count - 1;
       end
 
+      // Reset bomb status when countdown reaches zero
       if (bomb_countdown == 0) bomb1_en <= 0;
-      if (bomb_countdown_enemy == 0) bomb1_enemy_en <= 0;
+      if (bomb_countdown_enemy == 0) bomb2_en <= 0;
     end
   end
 
+  // Game state updates (slow clock domain)
   always @(posedge clk1p0) begin
-    random_seed <= {
-      random_seed[14:0], random_seed[15] ^ random_seed[13] ^ random_seed[12] ^ random_seed[10]
-    };
+    // Update bomb countdown timers
+     random_seed <= {
+        random_seed[14:0], random_seed[15] ^ random_seed[13] ^ random_seed[12] ^ random_seed[10]
+      };
+      
     bomb_countdown <= bomb1_en ? bomb_countdown - 1 : 10;
-    bomb_countdown_enemy <= bomb1_enemy_en ? bomb_countdown_enemy - 1 : 10;
+    bomb_countdown_enemy <= bomb2_en ? bomb_countdown_enemy - 1 : 10;
+
+    // Update player positions
     userXTile <= en ? newGreenXTile : GREEN_X_TILE;
     userYTile <= en ? newGreenYTile : GREEN_Y_TILE;
     botXTile <= en ? newYellowXTile : YELLOW_X_TILE;
     botYTile <= en ? newYellowYTile : YELLOW_Y_TILE;
   end
 
-  assign bombs = enemy_bombs_count == 4 ? 4'b1111 : 
-                 enemy_bombs_count == 3 ? 4'b0111 : 
-                 enemy_bombs_count == 2 ? 4'b0011 : 
-                 enemy_bombs_count == 1 ? 4'b0001 : 
+  // Bomb count indicator for LEDs
+  assign bombs = player_bombs_count == 4 ? 4'b1111 : 
+                 player_bombs_count == 3 ? 4'b0111 : 
+                 player_bombs_count == 2 ? 4'b0011 : 
+                 player_bombs_count == 1 ? 4'b0001 : 
                  4'b0000;
 
 endmodule

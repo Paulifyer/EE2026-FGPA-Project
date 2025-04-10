@@ -41,27 +41,23 @@ module enemy_movement (
   // State registers
   reg [2:0] current_state = IDLE;
   reg [2:0] next_state = IDLE;
-  reg [3:0] led_reg = 0;
-
   // Counters
   reg [5:0] patrol_counter = 0;
-  reg [1:0] flee_counter = 0;  // Counter to track consecutive FLEEING states
   reg [1:0] patrol_after_flee_counter = 0;  // Counter to track PATROLLING cycles after FLEEING
 
-  // Distance calculation
+  // Position and movement tracking
+  reg [9:0] new_botX;
+  reg [9:0] new_botY;
+
+  // Distance calculation to player
   wire [9:0] dx_player = (botX > userX) ? (botX - userX) : (userX - botX);
   wire [9:0] dy_player = (botY > userY) ? (botY - userY) : (userY - botY);
   wire [9:0] dist_to_player = dx_player + dy_player;
 
-  // Bomb dropping logic
-  reg [9:0] new_botX;
-  reg [9:0] new_botY;
-
   // Bomb danger detection
-  wire in_bomb1_danger, in_bomb2_danger, in_bomb_danger;
-  assign in_bomb1_danger = bomb1_en ? (botX == bomb1_x || botY == bomb1_y) : 0;
-  assign in_bomb2_danger = bomb2_en ? (botX == bomb2_x || botY == bomb2_y) : 0;
-  assign in_bomb_danger  = in_bomb1_danger || in_bomb2_danger;
+  wire in_bomb1_danger = bomb1_en ? (botX == bomb1_x || botY == bomb1_y) : 0;
+  wire in_bomb2_danger = bomb2_en ? (botX == bomb2_x || botY == bomb2_y) : 0;
+  wire in_bomb_danger = in_bomb1_danger | in_bomb2_danger;
 
   // Collision detection function
   function is_collision;
@@ -73,12 +69,21 @@ module enemy_movement (
     end
   endfunction
 
-  // Helper function to check if a position has a bomb
-  function is_bomb_location;
+  // Helper function to detect if position is in bomb line
+  function is_in_bomb_line;
     input [9:0] test_x, test_y;
     begin
-      is_bomb_location = (bomb1_en && bomb1_x == test_x && bomb1_y == test_y) || 
-                         (bomb2_en && bomb2_x == test_x && bomb2_y == test_y);
+      is_in_bomb_line = (bomb1_en && (test_x == bomb1_x || test_y == bomb1_y)) || 
+                         (bomb2_en && (test_x == bomb2_x || test_y == bomb2_y));
+    end
+  endfunction
+
+  // Helper function to check if a move is safe (no collision, no bomb, and within map boundaries)
+  function is_safe_move;
+    input [9:0] test_x, test_y;
+    begin
+      is_safe_move = (test_x < GRID_WIDTH) && (test_y < GRID_HEIGHT) &&
+          ~is_collision(test_x, test_y) && ~is_in_bomb_line(test_x, test_y);
     end
   endfunction
 
@@ -86,236 +91,280 @@ module enemy_movement (
   always @(*) begin
     next_state = current_state;
 
-    case (current_state)
-      IDLE: begin
-        if (dist_to_player <= CHASE_RANGE) next_state = CHASING;
-        else if (random_number[15:14] == 2'b01) next_state = PATROLLING;
-      end
+    if (en) begin
+      case (current_state)
+        IDLE: begin
+          if (dist_to_player <= CHASE_RANGE) next_state = CHASING;
+          else if (random_number[15:13] != 3'b111) next_state = PATROLLING;
+        end
 
-      PATROLLING: begin
-        if (patrol_after_flee_counter > 0) begin
-          next_state = PATROLLING;  // Stay in PATROLLING for 3 cycles after FLEEING
-        end else if (dist_to_player <= CHASE_RANGE) next_state = CHASING;
-        else if (in_bomb_danger) next_state = FLEEING;
-        else if (random_number[15:14] == 2'b00) next_state = IDLE;
-      end
+        PATROLLING: begin
+          if (in_bomb_danger) next_state = FLEEING;
+          else if (patrol_after_flee_counter > 0) next_state = PATROLLING;
+          else if (dist_to_player <= CHASE_RANGE) next_state = CHASING;
+          else if (random_number[15:14] == 2'b00) next_state = IDLE;
+        end
 
-      CHASING: begin
-        if (dist_to_player > CHASE_RANGE) next_state = PATROLLING;
-        else if (in_bomb_danger) next_state = FLEEING;
-      end
+        CHASING: begin
+          if (dist_to_player > CHASE_RANGE) next_state = PATROLLING;
+          else if (in_bomb_danger) next_state = FLEEING;
+        end
 
-      FLEEING: begin
-        if (!in_bomb_danger) next_state = PATROLLING;
-      end
-    endcase
-  end
-
-  // State machine - state and output logic
-  always @(posedge clk) begin
-    current_state <= next_state;
-    led_reg <= current_state;
-
-    // Handle fleeing counter logic
-    if (current_state == FLEEING && next_state == PATROLLING) begin
-      patrol_after_flee_counter <= 3;  // Initialize counter for 3 cycles
-    end else if (patrol_after_flee_counter > 0) begin
-      patrol_after_flee_counter <= patrol_after_flee_counter - 1;
+        FLEEING: begin
+          if (~in_bomb_danger) next_state = PATROLLING;
+        end
+      endcase
     end
-
-    // State-based movement behavior
-    case (current_state)
-      IDLE: direction <= NO_MOVE;
-
-      PATROLLING: begin
-        patrol_counter <= patrol_counter + 1;
-
-        if (patrol_counter >= 30) begin
-          patrol_counter <= 0;
-          // Check that random direction doesn't lead to a bomb
-          case (random_number[1:0] + 1)
-            UP:
-            if (!is_bomb_location(botX, botY - 1)) direction <= UP;
-            else direction <= NO_MOVE;
-            RIGHT:
-            if (!is_bomb_location(botX + 1, botY)) direction <= RIGHT;
-            else direction <= NO_MOVE;
-            DOWN:
-            if (!is_bomb_location(botX, botY + 1)) direction <= DOWN;
-            else direction <= NO_MOVE;
-            LEFT:
-            if (!is_bomb_location(botX - 1, botY)) direction <= LEFT;
-            else direction <= NO_MOVE;
-          endcase
-        end else if (is_collision(
-                botX, botY - 1
-            ) && direction == UP || is_bomb_location(
-                botX, botY - 1
-            ) && direction == UP)
-          direction <= RIGHT;
-        else if (is_collision(
-                botX + 1, botY
-            ) && direction == RIGHT || is_bomb_location(
-                botX + 1, botY
-            ) && direction == RIGHT)
-          direction <= DOWN;
-        else if (is_collision(
-                botX, botY + 1
-            ) && direction == DOWN || is_bomb_location(
-                botX, botY + 1
-            ) && direction == DOWN)
-          direction <= LEFT;
-        else if (is_collision(
-                botX - 1, botY
-            ) && direction == LEFT || is_bomb_location(
-                botX - 1, botY
-            ) && direction == LEFT)
-          direction <= UP;
-        else if ((direction == UP && (bomb1_en && bomb1_y == botY - 1 || bomb2_en && bomb2_y == botY - 1)) ||
-                 (direction == RIGHT && (bomb1_en && bomb1_x == botX + 1 || bomb2_en && bomb2_x == botX + 1)) ||
-                 (direction == DOWN && (bomb1_en && bomb1_y == botY + 1 || bomb2_en && bomb2_y == botY + 1)) ||
-                 (direction == LEFT && (bomb1_en && bomb1_x == botX - 1 || bomb2_en && bomb2_x == botX - 1))) begin
-          case (random_number[1:0])
-            2'b00:
-            if (!is_collision(
-                    botX, botY - 1
-                ) && !(bomb1_en && bomb1_y == botY - 1) && !(bomb2_en && bomb2_y == botY - 1))
-              direction <= UP;
-            2'b01:
-            if (!is_collision(
-                    botX + 1, botY
-                ) && !(bomb1_en && bomb1_x == botX + 1) && !(bomb2_en && bomb2_x == botX + 1))
-              direction <= RIGHT;
-            2'b10:
-            if (!is_collision(
-                    botX, botY + 1
-                ) && !(bomb1_en && bomb1_y == botY + 1) && !(bomb2_en && bomb2_y == botY + 1))
-              direction <= DOWN;
-            2'b11:
-            if (!is_collision(
-                    botX - 1, botY
-                ) && !(bomb1_en && bomb1_x == botX - 1) && !(bomb2_en && bomb2_x == botX - 1))
-              direction <= LEFT;
-          endcase
-        end
-      end
-
-      CHASING: begin
-        if (dx_player == 0 && dy_player == 0) direction <= NO_MOVE;
-        else if (dx_player > dy_player) begin
-          if (botX < userX) begin
-            if (!is_bomb_location(botX + 1, botY)) direction <= RIGHT;
-            else if (botY < userY && !is_bomb_location(botX, botY + 1)) direction <= DOWN;
-            else if (!is_bomb_location(botX, botY - 1)) direction <= UP;
-            else direction <= NO_MOVE;
-          end else begin
-            if (!is_bomb_location(botX - 1, botY)) direction <= LEFT;
-            else if (botY < userY && !is_bomb_location(botX, botY + 1)) direction <= DOWN;
-            else if (!is_bomb_location(botX, botY - 1)) direction <= UP;
-            else direction <= NO_MOVE;
-          end
-        end else begin
-          if (botY < userY) begin
-            if (!is_bomb_location(botX, botY + 1)) direction <= DOWN;
-            else if (botX < userX && !is_bomb_location(botX + 1, botY)) direction <= RIGHT;
-            else if (!is_bomb_location(botX - 1, botY)) direction <= LEFT;
-            else direction <= NO_MOVE;
-          end else begin
-            if (!is_bomb_location(botX, botY - 1)) direction <= UP;
-            else if (botX < userX && !is_bomb_location(botX + 1, botY)) direction <= RIGHT;
-            else if (!is_bomb_location(botX - 1, botY)) direction <= LEFT;
-            else direction <= NO_MOVE;
-          end
-        end
-      end
-
-      FLEEING: begin
-        flee_counter <= flee_counter + 1;
-
-        if (bomb1_en && bomb2_en && (bomb1_x == botX || bomb2_x == botX)) begin
-          // When both bombs are active and on same X as bot, prioritize UP/DOWN movement
-          if (!is_collision(botX, botY - 1) && !is_bomb_location(botX, botY - 1))
-            direction <= UP;
-          else if (!is_collision(botX, botY + 1) && !is_bomb_location(botX, botY + 1))
-            direction <= DOWN;
-          else if (!is_collision(botX - 1, botY) && !is_bomb_location(botX - 1, botY))
-            direction <= LEFT;
-          else if (!is_collision(botX + 1, botY) && !is_bomb_location(botX + 1, botY))
-            direction <= RIGHT;
-          else 
-            direction <= NO_MOVE;
-        end else if (bomb1_en && bomb2_en && (bomb1_y == botY || bomb2_y == botY)) begin
-          // When both bombs are active and on same Y as bot, prioritize LEFT/RIGHT movement
-          if (!is_collision(botX - 1, botY) && !is_bomb_location(botX - 1, botY))
-            direction <= LEFT;
-          else if (!is_collision(botX + 1, botY) && !is_bomb_location(botX + 1, botY))
-            direction <= RIGHT;
-          else if (!is_collision(botX, botY - 1) && !is_bomb_location(botX, botY - 1))
-            direction <= UP;
-          else if (!is_collision(botX, botY + 1) && !is_bomb_location(botX, botY + 1))
-            direction <= DOWN;
-          else
-            direction <= NO_MOVE;
-        end else if (bomb1_x == botX || bomb2_x == botX) begin
-          // When one bomb is on same X as bot, prioritize UP/DOWN movement
-          if (!is_collision(botX, botY - 1) && !is_bomb_location(botX, botY - 1))
-            direction <= UP;
-          else if (!is_collision(botX, botY + 1) && !is_bomb_location(botX, botY + 1))
-            direction <= DOWN;
-          else if (!is_collision(botX - 1, botY) && !is_bomb_location(botX - 1, botY))
-            direction <= LEFT;
-          else if (!is_collision(botX + 1, botY) && !is_bomb_location(botX + 1, botY))
-            direction <= RIGHT;
-          else
-            direction <= NO_MOVE;
-        end else if (bomb1_y == botY || bomb2_y == botY) begin
-          // When one bomb is on same Y as bot, prioritize LEFT/RIGHT movement
-          if (!is_collision(botX - 1, botY) && !is_bomb_location(botX - 1, botY))
-            direction <= LEFT;
-          else if (!is_collision(botX + 1, botY) && !is_bomb_location(botX + 1, botY))
-            direction <= RIGHT;
-          else if (!is_collision(botX, botY - 1) && !is_bomb_location(botX, botY - 1))
-            direction <= UP;
-          else if (!is_collision(botX, botY + 1) && !is_bomb_location(botX, botY + 1))
-            direction <= DOWN;
-          else
-            direction <= NO_MOVE;
-        end
-      end
-    endcase
-
-
-    // Calculate new position based on current direction
-    case (direction)
-      UP: begin
-        new_botX = botX;
-        new_botY = botY - 1;
-      end
-      RIGHT: begin
-        new_botX = botX + 1;
-        new_botY = botY;
-      end
-      DOWN: begin
-        new_botX = botX;
-        new_botY = botY + 1;
-      end
-      LEFT: begin
-        new_botX = botX - 1;
-        new_botY = botY;
-      end
-      default: begin
-        new_botX = botX;
-        new_botY = botY;
-      end
-    endcase
-
-    dropBomb <= ((new_botX == userX || new_botY == userY) && random_number[3:0] < 4'b0100) && 
-                (!is_bomb_location(
-        new_botX, new_botY
-    ));
   end
+
+  // State machine - state update and counter management
+  always @(posedge clk) begin
+    if (en) begin
+      current_state <= next_state;
+
+      // Handle patrol after flee counter
+      if (current_state == FLEEING && next_state == PATROLLING) begin
+        patrol_after_flee_counter <= 3;  // Initialize counter for 3 cycles of patrolling after fleeing
+      end else if (patrol_after_flee_counter > 0) begin
+        patrol_after_flee_counter <= patrol_after_flee_counter - 1;
+      end
+
+      // Update patrol counter
+      if (current_state == PATROLLING) begin
+        patrol_counter <= patrol_counter + 1;
+        if (patrol_counter >= 30) patrol_counter <= 0;
+      end
+
+      // Determine movement based on state
+      case (current_state)
+        IDLE: direction <= NO_MOVE;
+
+        PATROLLING: handle_patrol_movement();
+
+        CHASING: handle_chase_movement();
+
+        FLEEING: handle_flee_movement();
+      endcase
+
+      // Calculate new position based on current direction
+      calculate_new_position();
+
+      // Determine if a bomb should be dropped
+      handle_bomb_dropping();
+    end else begin
+      // When not enabled, stay in place and don't drop bombs
+      direction <= NO_MOVE;
+      dropBomb <= 0;
+    end
+  end
+
+  // Handle patrol movement logic
+  task handle_patrol_movement;
+    reg [3:0] dir_order;
+    reg safe_up, safe_right, safe_down, safe_left;
+    begin
+      // Check which directions are safe
+      safe_up = is_safe_move(botX, botY - 1);
+      safe_right = is_safe_move(botX + 1, botY);
+      safe_down = is_safe_move(botX, botY + 1);
+      safe_left = is_safe_move(botX - 1, botY);
+
+      // Use random number to determine direction selection pattern
+      case (random_number[2:0])
+        0: begin  // Check UP -> RIGHT -> DOWN -> LEFT
+          if (safe_up) direction <= UP;
+          else if (safe_right) direction <= RIGHT;
+          else if (safe_down) direction <= DOWN;
+          else if (safe_left) direction <= LEFT;
+          else direction <= NO_MOVE;
+        end
+
+        1: begin  // Check RIGHT -> DOWN -> LEFT -> UP
+          if (safe_right) direction <= RIGHT;
+          else if (safe_down) direction <= DOWN;
+          else if (safe_left) direction <= LEFT;
+          else if (safe_up) direction <= UP;
+          else direction <= NO_MOVE;
+        end
+
+        2: begin  // Check DOWN -> LEFT -> UP -> RIGHT
+          if (safe_down) direction <= DOWN;
+          else if (safe_left) direction <= LEFT;
+          else if (safe_up) direction <= UP;
+          else if (safe_right) direction <= RIGHT;
+          else direction <= NO_MOVE;
+        end
+
+        3: begin  // Check LEFT -> UP -> RIGHT -> DOWN
+          if (safe_left) direction <= LEFT;
+          else if (safe_up) direction <= UP;
+          else if (safe_right) direction <= RIGHT;
+          else if (safe_down) direction <= DOWN;
+          else direction <= NO_MOVE;
+        end
+
+        4: begin  // Check UP -> LEFT -> DOWN -> RIGHT
+          if (safe_up) direction <= UP;
+          else if (safe_left) direction <= LEFT;
+          else if (safe_down) direction <= DOWN;
+          else if (safe_right) direction <= RIGHT;
+          else direction <= NO_MOVE;
+        end
+
+        5: begin  // Check DOWN -> RIGHT -> UP -> LEFT
+          if (safe_down) direction <= DOWN;
+          else if (safe_right) direction <= RIGHT;
+          else if (safe_up) direction <= UP;
+          else if (safe_left) direction <= LEFT;
+          else direction <= NO_MOVE;
+        end
+
+        default: begin  // Random selection based on more bits
+          if (random_number[3]) begin
+            if (random_number[4] ? safe_up : safe_down) direction <= random_number[4] ? UP : DOWN;
+            else if (random_number[5] ? safe_left : safe_right)
+              direction <= random_number[5] ? LEFT : RIGHT;
+            else if (random_number[4] ? safe_down : safe_up)
+              direction <= random_number[4] ? DOWN : UP;
+            else if (random_number[5] ? safe_right : safe_left)
+              direction <= random_number[5] ? RIGHT : LEFT;
+            else direction <= NO_MOVE;
+          end else begin
+            if (random_number[6] ? safe_left : safe_right)
+              direction <= random_number[6] ? LEFT : RIGHT;
+            else if (random_number[7] ? safe_up : safe_down)
+              direction <= random_number[7] ? UP : DOWN;
+            else if (random_number[6] ? safe_right : safe_left)
+              direction <= random_number[6] ? RIGHT : LEFT;
+            else if (random_number[7] ? safe_down : safe_up)
+              direction <= random_number[7] ? DOWN : UP;
+            else direction <= NO_MOVE;
+          end
+        end
+      endcase
+    end
+  endtask
+
+  // Handle chase movement logic - move toward player when in range
+  task handle_chase_movement;
+    begin
+      if (dx_player == 0 && dy_player == 0) direction <= NO_MOVE;
+      else if (dx_player > dy_player) begin
+        // Prioritize horizontal movement
+        if (botX < userX) begin
+          if (is_safe_move(botX + 1, botY)) direction <= RIGHT;
+          else if (botY < userY && is_safe_move(botX, botY + 1)) direction <= DOWN;
+          else if (is_safe_move(botX, botY - 1)) direction <= UP;
+          else direction <= NO_MOVE;
+        end else begin
+          if (is_safe_move(botX - 1, botY)) direction <= LEFT;
+          else if (botY < userY && is_safe_move(botX, botY + 1)) direction <= DOWN;
+          else if (is_safe_move(botX, botY - 1)) direction <= UP;
+          else direction <= NO_MOVE;
+        end
+      end else begin
+        // Prioritize vertical movement
+        if (botY < userY) begin
+          if (is_safe_move(botX, botY + 1)) direction <= DOWN;
+          else if (botX < userX && is_safe_move(botX + 1, botY)) direction <= RIGHT;
+          else if (is_safe_move(botX - 1, botY)) direction <= LEFT;
+          else direction <= NO_MOVE;
+        end else begin
+          if (is_safe_move(botX, botY - 1)) direction <= UP;
+          else if (botX < userX && is_safe_move(botX + 1, botY)) direction <= RIGHT;
+          else if (is_safe_move(botX - 1, botY)) direction <= LEFT;
+          else direction <= NO_MOVE;
+        end
+      end
+    end
+  endtask
+
+  // Handle flee movement logic - move away from bombs
+  task handle_flee_movement;
+    reg [3:0] safe_directions;
+    begin
+      // Initialize safe directions bitmap (UP, RIGHT, DOWN, LEFT)
+      safe_directions[0] = is_safe_move(botX, botY - 1);
+      safe_directions[1] = is_safe_move(botX + 1, botY);
+      safe_directions[2] = is_safe_move(botX, botY + 1);
+      safe_directions[3] = is_safe_move(botX - 1, botY);
+
+      // Prioritize movement to directions that are perpendicular to bomb blast line
+      if (safe_directions[0] && safe_directions[3]) begin
+        direction <= UP;  // Move up if both up and left are safe
+      end else if (safe_directions[1] && safe_directions[2]) begin
+        direction <= RIGHT;  // Move right if both right and down are safe
+      end else if (safe_directions[2] && safe_directions[3]) begin
+        direction <= DOWN;  // Move down if both down and left are safe
+      end else if (safe_directions[0] && safe_directions[1]) begin
+        direction <= LEFT;  // Move left if both up and right are safe
+      end else begin
+        // If no safe direction is found, move in any possible one
+        direction <= random_number[1:0];
+        if (safe_directions[0]) begin
+          direction <= UP;
+        end else if (safe_directions[1]) begin
+          direction <= RIGHT;
+        end else if (safe_directions[2]) begin
+          direction <= DOWN;
+        end else if (safe_directions[3]) begin
+          direction <= LEFT;
+        end else begin
+          // move anywhere without collision
+          if (~is_collision(botX, botY - 1)) begin
+            direction <= UP;
+          end else if (~is_collision(botX + 1, botY)) begin
+            direction <= RIGHT;
+          end else if (~is_collision(botX, botY + 1)) begin
+            direction <= DOWN;
+          end else if (~is_collision(botX - 1, botY)) begin
+            direction <= LEFT;
+          end else begin
+            direction <= NO_MOVE;  // No safe move available
+          end
+        end
+      end
+    end
+  endtask
+
+  // Calculate new position based on current direction
+  task calculate_new_position;
+    begin
+      case (direction)
+        UP: begin
+          new_botX = botX;
+          new_botY = botY - 1;
+        end
+        RIGHT: begin
+          new_botX = botX + 1;
+          new_botY = botY;
+        end
+        DOWN: begin
+          new_botX = botX;
+          new_botY = botY + 1;
+        end
+        LEFT: begin
+          new_botX = botX - 1;
+          new_botY = botY;
+        end
+        default: begin
+          new_botX = botX;
+          new_botY = botY;
+        end
+      endcase
+    end
+  endtask
+
+  // Handle bomb dropping logic
+  task handle_bomb_dropping;
+    begin
+      dropBomb <= ((new_botX == userX || new_botY == userY) && 
+                  random_number[3:0] < 4'b0100) && 
+                  (~is_in_bomb_line(new_botX, new_botY));
+    end
+  endtask
 
   // LED output assignment
-  assign led = led_reg;
+  assign led[3:0] = direction;
 
 endmodule

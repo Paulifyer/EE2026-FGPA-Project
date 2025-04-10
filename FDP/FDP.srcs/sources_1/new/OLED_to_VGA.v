@@ -5,16 +5,19 @@ module OLED_to_VGA (
     input [15:0] pixel_data,
     input [15:0] score,
     input [12:0] pixel_index,
+    input [3:0] bombs,  // 4 bits representing up to 4 bombs (1111 = 4 bombs, 0111 = 3 bombs, etc.)
     output hsync,
     vsync,
     output reg [11:0] rgb
 );
+
   // Border parameters
   parameter BORDER_WIDTH = 4;
 
   // Color constants
   parameter COLOUR_BLACK = 12'h000;
   parameter COLOUR_WHITE = 12'hFFF;
+  parameter BOMB_GREY = 16'ha554;
 
   wire video_on;
   wire [9:0] x;
@@ -39,7 +42,7 @@ module OLED_to_VGA (
 
   // Frame buffer to store complete OLED image
   (* ram_style = "block" *) reg [12:0] frame_buffer[0:6143];
-  
+
   // Adjust VGA coordinates to account for centering offset
   wire [9:0] adjusted_x = (x >= X_OFFSET && x < X_OFFSET + (OLED_WIDTH * SCALE_X)) ? x - X_OFFSET : 10'd0;
   wire [9:0] adjusted_y = (y >= Y_OFFSET && y < Y_OFFSET + (OLED_HEIGHT * SCALE_Y)) ? y - Y_OFFSET : 10'd0;
@@ -48,14 +51,14 @@ module OLED_to_VGA (
   wire [6:0] vga_to_oled_x = adjusted_x >> 2;
   wire [5:0] vga_to_oled_y = adjusted_y >> 2;
   wire [12:0] buff_index = vga_to_oled_y * OLED_WIDTH + vga_to_oled_x;
-  
+
   // Register the read address for Block RAM inference
   reg [12:0] buff_index_reg;
   // Register the output from frame buffer
   reg [12:0] frame_buff_data;
   // Register display area flag
   reg is_in_display_area_reg;
-  
+
   always @(posedge clk) begin
     buff_index_reg <= buff_index;
     frame_buff_data <= frame_buffer[buff_index_reg];
@@ -98,9 +101,7 @@ module OLED_to_VGA (
   // Convert binary score to 4-digit BCD (assumes score < 10000)
   wire [3:0] digit0, digit1, digit2, digit3;
 
-  wire score_pixel_active;
 
-  wire is_in_score_area;
 
   // Instantiate the BCD converter module
   BcdConverter bcd_inst (
@@ -112,13 +113,21 @@ module OLED_to_VGA (
   );
 
   // Define score display parameters
-  parameter SCORE_VOFFSET = 370;  // Top offset for score display
-  parameter SCORE_HOFFSET = 125;  // Left offset for score display
+  parameter SCORE_VOFFSET = 370;
+  parameter SCORE_HOFFSET = 125;
+  wire is_in_score_area;
+  wire score_pixel_active;
+
+  // Define bomb display parameters
+  parameter BOMB_VOFFSET = 400;
+  parameter BOMB_HOFFSET = 125;
+  wire is_in_bomb_area;
+  wire bomb_pixel_active;
 
   // Instantiate the score module with custom offsets:
   ScoreDisplay #(
       .SCORE_VOFFSET(SCORE_VOFFSET),
-      .SCORE_HOFFSET(SCORE_HOFFSET) 
+      .SCORE_HOFFSET(SCORE_HOFFSET)
   ) score_inst (
       .clk            (clk),
       .x_in           (x),
@@ -130,18 +139,40 @@ module OLED_to_VGA (
       .in_score_region(is_in_score_area),
       .pixel_on       (score_pixel_active)
   );
-  
-  BombDisplay bomb_inst ();
-  HealthDisplay health_inst ();
 
+  // Instantiate the bomb display module
+  BombDisplay #(
+      .BOMB_VOFFSET(BOMB_VOFFSET),
+      .BOMB_HOFFSET(BOMB_HOFFSET)
+  ) bomb_inst (
+      .clk(clk),
+      .x_in(x),
+      .y_in(y),
+      .bombs(bombs),
+      .in_bomb_region(is_in_bomb_area),
+      .pixel_on(bomb_pixel_active)
+  );
+
+  // // Instantiate the health display module
+  // HealthDisplay #(
+  //     .HEALTH_VOFFSET(HEALTH_VOFFSET),
+  //     .HEALTH_HOFFSET(HEALTH_HOFFSET)
+  // ) health_inst (
+  //     .clk(clk),
+  //     .x_in(x),
+  //     .y_in(y),
+  //     .health(player_health),
+  //     .in_health_region(is_in_health_area),
+  //     .pixel_on(health_pixel_active)
+  // );
 
   always @(posedge clk) begin
     if (~video_on) rgb <= COLOUR_BLACK;
     else if (is_in_display_area_reg) rgb <= frame_buff_data;  // Use registered data
     else if (is_in_border) rgb <= COLOUR_WHITE;
-    else if (is_in_score_area && score_pixel_active) rgb <= COLOUR_WHITE;
-    else if (is_in_score_area) rgb <= COLOUR_BLACK;
-    else rgb <= COLOUR_BLACK;  // Everything else black
+    else if (score_pixel_active) rgb <= COLOUR_WHITE;
+    else if (bomb_pixel_active) rgb <= COLOUR_WHITE;
+    else rgb <= COLOUR_BLACK;
   end
 
 endmodule
