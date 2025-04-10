@@ -14,12 +14,16 @@ module drawCordinate (
 
 import sprites::*;
 
-  parameter BLACK  = 16'h0000;
-  parameter RED    = 16'hF800;
-  parameter WHITE  = 16'hFFFF;
-  parameter GREEN  = 16'h07E0;
-  parameter BLUE   = 16'h001F;
-  parameter YELLOW = 16'hFFE0;
+  parameter BLACK       = 16'h0000;
+  parameter RED         = 16'hF800;
+  parameter WHITE       = 16'hFFFF;
+  parameter GREEN       = 16'h07E0;
+  parameter BLUE        = 16'h001F;
+  parameter YELLOW      = 16'hFFE0;
+  parameter BOMB_GREY   = 16'ha554;
+  parameter BOMB_ORANGE = 16'ha554;
+  parameter HEART_RED   = 16'hfa20;
+  
 
   parameter TILE_WIDTH  = 8;  // 96/12 = 8 pixels per tile width
   parameter TILE_HEIGHT = 8;  // 64/8 = 8 pixels per tile height
@@ -39,15 +43,18 @@ import sprites::*;
   wire [3:0] tileY = pixelY / TILE_HEIGHT;
   wire [6:0] tileIndex = (tileY * GRID_WIDTH) + tileX;
 
-  wire isWall = wall_tiles[tileIndex];
-  wire isBreakable = breakable_tiles[tileIndex];
-  wire isBomb = bomb_tiles[tileIndex];
-
   // Calculate local coordinates within an 8x8 tile
   wire [2:0] localX = pixelX % TILE_WIDTH;
   wire [2:0] localY = pixelY % TILE_HEIGHT;
-  wire [5:0] tilePixelIndex = localY * TILE_WIDTH + localX;
+
+  wire isWall = wall_tiles[tileIndex];
+  wire isBreakable = breakable_tiles[tileIndex];
+  wire isBomb = bomb_tiles[tileIndex];
   
+  wire [2:0] localX = pixelX % TILE_WIDTH; // IDKY but duplicating this fixes the orientation problem for objects
+  wire [2:0] localY = pixelY % TILE_HEIGHT;
+  wire [5:0] tilePixelIndex = localY * TILE_WIDTH + localX;
+
   // Determine active sprite pixel for wall and breakable using sprites data.
   wire wallActive = isWall && (WALL_SPRITE_DATA[tilePixelIndex]);
   wire brickActive = isBreakable && (BRICK_SPRITE_DATA[tilePixelIndex]);
