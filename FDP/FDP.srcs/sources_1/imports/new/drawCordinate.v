@@ -4,11 +4,16 @@ module drawCordinate (
     input  [12:0] cordinateIndex,
     input  [ 7:0] userX,
     input  [ 7:0] userY,
+    input bomb_en,
+    input  bomb_en_enemy,
     input  [ 7:0] botX,
     input  [ 7:0] botY,
     input  [95:0] wall_tiles,
     input  [95:0] breakable_tiles,
-    input  [95:0] bomb_tiles,
+    input  [ 7:0] bombX,
+    input  [ 7:0] bombY,
+    input  [ 7:0] bomb_enemy_x,
+    input  [ 7:0] bomb_enemy_y,
     output [15:0] oledColour
 );
 
@@ -41,7 +46,6 @@ import sprites::*;
 
   wire isWall = wall_tiles[tileIndex];
   wire isBreakable = breakable_tiles[tileIndex];
-  wire isBomb = bomb_tiles[tileIndex];
 
   // Calculate local coordinates within an 8x8 tile
   wire [2:0] localX = pixelX % TILE_WIDTH;
@@ -51,6 +55,15 @@ import sprites::*;
   // Determine active sprite pixel for wall and breakable using sprites data.
   wire wallActive = isWall && (WALL_SPRITE_DATA[tilePixelIndex]);
   wire brickActive = isBreakable && (BRICK_SPRITE_DATA[tilePixelIndex]);
+
+  // Calculate if the current pixel matches any bomb's position (player or enemy)
+  wire isBomb;
+  wire isPlayerBomb = bomb_en ? (pixelX >= bombX && pixelX < (bombX + TILE_WIDTH)) &&
+                     (pixelY >= bombY && pixelY < (bombY + TILE_HEIGHT)) : 0;
+  wire isEnemyBomb = bomb_en_enemy ? (pixelX >= bomb_enemy_x && pixelX < (bomb_enemy_x + TILE_WIDTH)) &&
+                    (pixelY >= bomb_enemy_y && pixelY < (bomb_enemy_y + TILE_HEIGHT)) : 0;
+
+  assign isBomb = isPlayerBomb || isEnemyBomb;
 
   // Assign color based on tile type: bomb has highest priority.
   assign objectColour = isBomb ? WHITE : 
