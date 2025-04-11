@@ -8,8 +8,10 @@ module Map (
     btnR,
     btnC,
     en,
+    input JAin, //for UARTRx
     input [12:0] pixel_index,
     input [95:0] wall_tiles,
+    output JAout, //for UARTTx
     output [3:0] led,
     input [95:0] breakable_tiles,
     input [95:0] powerup_tiles,
@@ -64,7 +66,7 @@ module Map (
   // Clock Divider for game timing
   slow_clock c1 (
       .clk(clk),
-      .period(1_0000_0000),
+      .period(1_000_000),
       .slow_clock(clk1p0)
   );
 
@@ -117,6 +119,36 @@ module Map (
       .en(en),
       .new_index(new_bot_index)
   );
+  
+  //UART TRANSMISSION
+    reg tx_start;
+    reg rx_receiving = 0;
+    reg [15:0] data;
+    wire busy;
+    UartTx send (clk, tx_start, rx_receiving, data, JAout, busy);
+    
+  //UART RECEIVE
+    wire valid, isReceiving;
+    wire [2:0] packetType;
+    wire [12:0] dataReceived;
+    UartRx receive (
+        .rx(JAin),
+        .clk(clk),
+        .packetType(packetType),
+        .data(dataReceived),
+        .valid(valid),
+        .isReceiving(isReceiving)
+    );
+    
+    //Transmission Buffer (FIFO)
+    reg readEn, writeEn; //enables read and write resp.
+    reg [15:0] writeData; //data written into the buffer
+    wire empty, full; //check if empty or full
+    wire [15:0] readData; //data written from the buffer
+    FIFOReg txBuffer (readEn, writeEn, clk, writeData, empty, full, readData);
+   
+    
+    
 
   // Enemy AI movement controller
   enemy_movement enemy_move (
@@ -157,7 +189,7 @@ module Map (
     if (en) begin
       btnC_prev <= btnC_debounced;
       btnC_enemy_prev <= btnC_enemy;
-
+      
       // Process directional input
       user_move <= btnU ? 1 : (btnR ? 2 : (btnD ? 3 : (btnL ? 4 : 0)));
 
@@ -183,7 +215,13 @@ module Map (
         bomb_en[1] <= 1;
         enemy_bombs_count <= enemy_bombs_count - 1;
       end
-
+      if (!empty && !busy) begin
+        readEn <= 1'b1;
+        data = readData;
+      end else begin
+        readEn <= 1'b0;
+      end  
+      
       // Reset bomb status when countdown reaches zero
       if (bomb_countdown == 0) bomb_en[0] <= 0;
       if (bomb_countdown_enemy == 0) bomb_en[1] <= 0;
@@ -200,10 +238,15 @@ module Map (
     random_seed <= {
       random_seed[14:0], random_seed[15] ^ random_seed[13] ^ random_seed[12] ^ random_seed[10]
     };
-
+    
     bomb_countdown <= bomb_en[0] ? bomb_countdown - 1 : 10;
     bomb_countdown_enemy <= bomb_en[1] ? bomb_countdown_enemy - 1 : 10;
-
+    
+    // Checks if new location will be updated and FIFO is full, then starts a write operation into FIFO
+    if (user_index != new_user_index & !full) begin
+        writeData <= {3'b000, 3'b000, new_user_index};
+        writeEn <= 1'b1;
+    end else writeEn <= 1'b0;
     // Update player positions using indices
     user_index <= en ? new_user_index : (GREEN_Y_TILE * GRID_WIDTH + GREEN_X_TILE);
     bot_index <= en ? new_bot_index : (YELLOW_Y_TILE * GRID_WIDTH + YELLOW_X_TILE);
