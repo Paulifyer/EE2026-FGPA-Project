@@ -71,16 +71,23 @@ module BombDisplay #(
     always @(posedge clk) begin
         // Check if we're in the bomb display region
         stage1_in_region <= (y_in >= BOMB_VOFFSET) && 
-                           (y_in < BOMB_VOFFSET + EFFECTIVE_BOMB_SIZE) &&
-                           (x_in >= BOMB_HOFFSET) && 
-                           (x_in < BOMB_HOFFSET + TOTAL_WIDTH);
+                            (y_in < BOMB_VOFFSET + EFFECTIVE_BOMB_SIZE) &&
+                            (x_in >= BOMB_HOFFSET) && 
+                            (x_in < BOMB_HOFFSET + TOTAL_WIDTH);
         
         // Calculate position within the overall bomb display area
         x_pos_stage1 <= x_in - BOMB_HOFFSET;
         y_pos_stage1 <= y_in - BOMB_VOFFSET;
         
-        // Calculate which bomb we're looking at (0-3, 0 is leftmost)
-        bomb_index_stage1 <= x_pos_stage1 / BOMB_STRIDE;
+        // Calculate which bomb we're looking at (0-3, 0 is leftmost) using if-else chain
+        if (x_pos_stage1 < BOMB_STRIDE)
+            bomb_index_stage1 <= 3'd0;
+        else if (x_pos_stage1 < (2 * BOMB_STRIDE))
+            bomb_index_stage1 <= 3'd1;
+        else if (x_pos_stage1 < (3 * BOMB_STRIDE))
+            bomb_index_stage1 <= 3'd2;
+        else
+            bomb_index_stage1 <= 3'd3;
         
         // Calculate position relative to the current bomb's top-left corner
         rel_x_stage1 <= x_pos_stage1 - (bomb_index_stage1 * BOMB_STRIDE);
