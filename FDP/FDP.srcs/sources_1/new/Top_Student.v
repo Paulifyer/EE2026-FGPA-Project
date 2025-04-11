@@ -17,13 +17,13 @@ module Top_Student (
     btnL,
     btnR,
     btnD,
-    JCIn,
+    JAIn,
     input [15:0] sw,
     output [7:0] JB,
     output [15:0] led,
     output [11:0] rgb,
     output hsync,
-    output vsync
+    output vsync, JAOut
 );
 
   import Data_Item::*;
@@ -94,9 +94,12 @@ module Top_Student (
       .btnR(btnR),
       .btnC(btnC),
       .en(sw == Task_4D_pw),
+      .JAIn(JAIn),
+      .JAOut(JAOut),
       .wall_tiles(wall_tiles),
       .pixel_index(pixel_index),
-      .pixel_data(oled_data_D)
+      .pixel_data(oled_data_D),
+      .led(led)
   );
   
 

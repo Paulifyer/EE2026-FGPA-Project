@@ -25,7 +25,7 @@ module UartRx(
     input clk,
     output reg [2:0] packetType,
     output reg [12:0] data,
-    output reg valid,
+    output reg valid = 1'b0,
     output reg isReceiving = 1'b0
     );
     parameter BAUDRATE = 112500;
@@ -38,7 +38,7 @@ module UartRx(
     // CYCLES_PER_BIT/2 is used here to desync the sampling and the transmimssion
     // to ensure that signals are only sampled at the middle of transmission time
     // for stability
-        if (rx && !isReceiving) begin
+        if (!rx && !isReceiving) begin
             isReceiving <= 1'b1;
             counter <= CYCLES_PER_BIT/2; 
             index <= 0;
@@ -47,15 +47,16 @@ module UartRx(
             if (counter < CYCLES_PER_BIT)
                 counter <= counter + 1;
             else begin
-                counter <= 12'b0;
+                counter <= 12'b1;
                 if (index < 18) begin
                     packet[index] <= rx;
                     index <= index + 1;
-                end else begin
-                    isReceiving <= 1'b0;
-                    valid <= (rx == 1'b1) ? 1'b1 : 1'b0;
-                    packetType = packet[16:14];
-                    data = packet[13:1];
+                    if (index == 17) begin
+                        isReceiving <= 1'b0;
+                        valid <= 1;
+                        packetType <= packet[16:14];
+                        data <= packet[13:1];
+                    end
                 end
             end
         end else
