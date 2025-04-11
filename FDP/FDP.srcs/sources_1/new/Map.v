@@ -46,7 +46,7 @@ module Map (
   reg [3:0] bomb_countdown, bomb_countdown_enemy;
   wire dropBomb, dropBomb_enemy;
   reg [2:0] player_bombs_count = 4, enemy_bombs_count = 4;
-
+  
   // Button management
   wire btnC_debounced;
   reg btnC_prev, btnC_enemy_prev;
@@ -56,6 +56,18 @@ module Map (
   // State tracking to prevent accidental bomb placement on first enable
   reg module_was_enabled = 0;
   reg first_enable_btnC_pressed = 0;
+
+    wire [13:0] bomb_tiles;
+    wire [95:0] after_break_tiles, explosion_display, pu_push;
+    reg [2:0] bomb_limit = 1, bomb_range = 2;
+    reg [13:0] bomb_time = 10000;
+    reg [2:0] player_health = 3'b111;
+    wire [2:0] new_player_health;
+    wire [3:0] start_bomb;
+    reg push_bomb_ability = 0;
+    wire btnC_state;
+    assign btnC_state = btnC_debounced & first_enable_btnC_pressed;
+    bomb boom (clk,btnC_state,module_was_enabled,push_bomb_ability,wall_tiles,breakable_tiles,bomb_indices[13:7],user_index,player_health,bomb_limit,bomb_range,bomb_time,after_break_tiles,explosion_display,bomb_tiles,new_player_health,start_bomb);
 
   // Random number generation
   reg [15:0] random_seed;
@@ -85,7 +97,8 @@ module Map (
       .user_index(user_index),
       .bot_index(bot_index),
       .wall_tiles(wall_tiles),
-      .breakable_tiles(breakable_tiles),
+      .breakable_tiles(after_break_tiles),
+      .explosion_display(explosion_display),
       .bomb_indices(bomb_indices),
       .bomb_en(bomb_en),
       .oledColour(pixel_data)
@@ -95,7 +108,7 @@ module Map (
   is_collision is_wall_user (
       .cur_index(user_index),
       .wall_tiles(wall_tiles),
-      .breakable_tiles(breakable_tiles),
+      .breakable_tiles(after_break_tiles),
       .direction(user_move),
       .en(en),
       .new_index(new_user_index)
@@ -105,7 +118,7 @@ module Map (
   is_collision is_wall_bot (
       .cur_index(bot_index),
       .wall_tiles(wall_tiles),
-      .breakable_tiles(breakable_tiles),
+      .breakable_tiles(after_break_tiles),
       .direction(bot_move_wire),
       .en(en),
       .new_index(new_bot_index)
@@ -120,7 +133,7 @@ module Map (
       .bomb_indices(bomb_indices),
       .bomb_en(bomb_en),
       .wall_tiles(wall_tiles),
-      .breakable_tiles(breakable_tiles),
+      .breakable_tiles(after_break_tiles),
       .random_number(random_seed),
       .dropBomb(btnC_enemy),
       .direction(bot_move_wire)
@@ -141,7 +154,7 @@ module Map (
   end
 
   // Bomb placement logic
-  assign dropBomb = (en && player_bombs_count != 0 && module_was_enabled && !first_enable_btnC_pressed) ? btnC_posedge : 0;
+//  assign dropBomb = (en && player_bombs_count != 0 && module_was_enabled && !first_enable_btnC_pressed) ? btnC_posedge : 0;
   assign dropBomb_enemy = (en && enemy_bombs_count != 0) ? btnC_enemy_posedge : 0;
 
   // Input processing and bomb management (fast clock domain)
@@ -163,11 +176,13 @@ module Map (
       end
 
       // Handle player bomb placement
-      if (dropBomb) begin
-        bomb_indices[6:0] <= user_index; // Player bomb index
-        bomb_en[0] <= 1;
-        player_bombs_count <= player_bombs_count - 1;
-      end
+//      if (dropBomb) begin
+//        bomb_indices[6:0] <= user_index; // Player bomb index
+//        bomb_en[0] <= 1;
+//        player_bombs_count <= player_bombs_count - 1;
+//      end
+      bomb_indices[6:0] <= bomb_tiles[6:0];
+      bomb_en[0] <= start_bomb[0];
 
       // Handle enemy bomb placement
       if (dropBomb_enemy) begin
@@ -179,6 +194,11 @@ module Map (
       // Reset bomb status when countdown reaches zero
       if (bomb_countdown == 0) bomb_en[0] <= 0;
       if (bomb_countdown_enemy == 0) bomb_en[1] <= 0;
+      
+      // Player get push powerup
+      if (pu_push[user_index] == 1'b1)
+        push_bomb_ability = 1;
+        
     end else begin
       // Reset the enabled state when the module is disabled
       module_was_enabled <= 0;
