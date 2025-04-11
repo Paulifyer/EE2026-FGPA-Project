@@ -17,7 +17,7 @@ module Top_Student (
     btnL,
     btnR,
     btnD,
-    JCIn,
+    JAin,
     input [15:0] sw,
     input PS2Data,
     input PS2Clk,
@@ -27,7 +27,7 @@ module Top_Student (
     output [15:0] led,
     output [3:0] an,
     output hsync,
-    output vsync
+    output vsync, JAout
 );
 
   import Data_Item::*;
@@ -98,7 +98,7 @@ module Top_Student (
 
   MainMenu menu (
       pixel_index,
-      halfSecClock,
+      clkOneSec,
       state,
       oled_data_menu
   );
@@ -135,8 +135,10 @@ module Top_Student (
       .btnR(btnR | key_D),
       .btnC(btnC | key_B),
       .en(state),
+      .JAin(JAin),
       .pixel_index(pixel_index),
       .wall_tiles(wall_tiles),
+      .JAout(JAout),
       .bombs(led[15:12]),
       .led(led[3:0]),
       .breakable_tiles(breakable_tiles),
