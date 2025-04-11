@@ -3,11 +3,9 @@
 module enemy_movement (
     input clk,
     input en,
-    input [3:0] botX,
-    input [3:0] botY,
-    input [3:0] userX,
-    input [3:0] userY,
-    input [13:0] bomb_indices,  // Changed to 1D array [13:0] for two 7-bit indices
+    input [6:0] bot_index,
+    input [6:0] user_index,
+    input [13:0] bomb_indices,
     input [1:0] bomb_en,
     input [95:0] wall_tiles,
     input [95:0] breakable_tiles,
@@ -43,18 +41,21 @@ module enemy_movement (
   // Position and movement tracking
   reg [3:0] new_botX;
   reg [3:0] new_botY;
-  
+
+  // Extract X/Y coordinates from indices for easier comparison
+  wire [3:0] botX = bot_index % GRID_WIDTH;
+  wire [3:0] botY = bot_index / GRID_WIDTH;
+  wire [3:0] userX = user_index % GRID_WIDTH;
+  wire [3:0] userY = user_index / GRID_WIDTH;
+
   // Extract bomb X/Y coordinates from indices for easier comparison
   wire [3:0] bomb_X[1:0];
   wire [3:0] bomb_Y[1:0];
-  
+
   assign bomb_X[0] = bomb_indices[6:0] % GRID_WIDTH;
   assign bomb_Y[0] = bomb_indices[6:0] / GRID_WIDTH;
   assign bomb_X[1] = bomb_indices[13:7] % GRID_WIDTH;
   assign bomb_Y[1] = bomb_indices[13:7] / GRID_WIDTH;
-
-  // Calculate bot's current grid index
-  wire [6:0] bot_index = botY * GRID_WIDTH + botX;
 
   // Distance calculation to player
   wire [3:0] dx_player = (botX > userX) ? (botX - userX) : (userX - botX);
@@ -361,12 +362,11 @@ module enemy_movement (
       endcase
     end
   endtask
-
     wire [6:0] new_bot_index = new_botY * GRID_WIDTH + new_botX;
-    wire [6:0] user_index = userY * GRID_WIDTH + userX;
-    
+
   // Handle bomb dropping logic
   task handle_bomb_dropping;
+
     begin
       // Drop bomb if in the same row or column as the user and not already in a bomb line
       dropBomb <= ((new_botX == userX || new_botY == userY) && 
