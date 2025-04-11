@@ -4,6 +4,7 @@ module is_collision (
     input [6:0] cur_index,
     input [95:0] wall_tiles,
     input [95:0] breakable_tiles,
+    input [95:0] powerup_tiles,
     input [2:0] direction,
     input en,
     output reg [6:0] new_index

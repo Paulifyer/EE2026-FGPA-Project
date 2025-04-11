@@ -12,6 +12,7 @@ module Map (
     input [95:0] wall_tiles,
     output [3:0] led,
     input [95:0] breakable_tiles,
+    input [95:0] powerup_tiles,
     output [3:0] bombs,
     output [15:0] pixel_data
 );
@@ -86,8 +87,12 @@ module Map (
       .bot_index(bot_index),
       .wall_tiles(wall_tiles),
       .breakable_tiles(breakable_tiles),
+      .powerup_tiles(powerup_tiles),
       .bomb_indices(bomb_indices),
       .bomb_en(bomb_en),
+//      .en(en),
+//      .user_direction(user_move),
+//      .bot_direction(bot_move_wire),
       .oledColour(pixel_data)
   );
 
@@ -96,6 +101,7 @@ module Map (
       .cur_index(user_index),
       .wall_tiles(wall_tiles),
       .breakable_tiles(breakable_tiles),
+      .powerup_tiles(powerup_tiles),
       .direction(user_move),
       .en(en),
       .new_index(new_user_index)
@@ -106,6 +112,7 @@ module Map (
       .cur_index(bot_index),
       .wall_tiles(wall_tiles),
       .breakable_tiles(breakable_tiles),
+      .powerup_tiles(powerup_tiles),
       .direction(bot_move_wire),
       .en(en),
       .new_index(new_bot_index)
@@ -121,6 +128,7 @@ module Map (
       .bomb_en(bomb_en),
       .wall_tiles(wall_tiles),
       .breakable_tiles(breakable_tiles),
+      .powerup_tiles(powerup_tiles),
       .random_number(random_seed),
       .dropBomb(btnC_enemy),
       .direction(bot_move_wire)

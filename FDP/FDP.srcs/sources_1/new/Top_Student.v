@@ -40,6 +40,7 @@ module Top_Student (
   wire [15:0] oled_data, oled_game_map, oled_data_menu;
   wire [95:0] wall_tiles;
   wire [95:0] breakable_tiles;
+  wire [95:0] powerup_tiles;
 
   reg  [15:0] score;
   reg  [ 7:0] current_key;
@@ -52,6 +53,8 @@ module Top_Student (
   // generte wall tiles 1 for wall 0 for no wall sparese
   assign wall_tiles         = 96'hFFF_945_C11_901_825_C81_829_FFF; // GAME MAP
   assign breakable_tiles    = 96'h000_0AA_004_6B0_012_200_094_000;
+//  assign powerup_tiles      = 96'h000_082_0F4_420_002_278_010_000; //TESTING
+  assign powerup_tiles      = 96'h000_082_004_420_002_200_010_000; // ACTUAL
 
   // CLOCK GENERATOR
   slow_clock c1 (
@@ -140,6 +143,7 @@ module Top_Student (
       .bombs(led[15:12]),
       .led(led[3:0]),
       .breakable_tiles(breakable_tiles),
+      .powerup_tiles(powerup_tiles),
       .pixel_data(oled_game_map)
   );
 
