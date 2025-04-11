@@ -8,9 +8,8 @@ module drawCordinate (
     input [7:0] botY,
     input [95:0] wall_tiles,
     input [95:0] breakable_tiles,
-    input [7:0] bomb_X[1:0],
-    input [7:0] bomb_Y[1:0],
-    input bomb_en[1:0],
+    input [13:0] bomb_indices,  // Changed to 1D array [13:0] for two 7-bit indices
+    input [1:0] bomb_en,
     output [15:0] oledColour
 );
 
@@ -51,7 +50,16 @@ module drawCordinate (
   wire wallActive = isWall && (WALL_SPRITE_DATA[tilePixelIndex]);
   wire brickActive = isBreakable && (BRICK_SPRITE_DATA[tilePixelIndex]);
 
-  // Calculate if the current pixel matches any bomb's position (player or enemy)
+  // Convert bomb indices to X/Y coordinates for drawing
+  wire [7:0] bomb_X [1:0];
+  wire [7:0] bomb_Y [1:0];
+  
+  assign bomb_X[0] = (bomb_indices[6:0] % GRID_WIDTH) * TILE_WIDTH;
+  assign bomb_Y[0] = (bomb_indices[6:0] / GRID_WIDTH) * TILE_HEIGHT;
+  assign bomb_X[1] = (bomb_indices[13:7] % GRID_WIDTH) * TILE_WIDTH;
+  assign bomb_Y[1] = (bomb_indices[13:7] / GRID_WIDTH) * TILE_HEIGHT;
+
+  // Calculate if the current pixel matches any bomb's position
   wire isBomb;
   wire isbomb1 = bomb_en[0] ? (pixelX >= bomb_X[0] && pixelX < (bomb_X[0] + TILE_WIDTH)) &&
                      (pixelY >= bomb_Y[0] && pixelY < (bomb_Y[0] + TILE_HEIGHT)) : 0;
