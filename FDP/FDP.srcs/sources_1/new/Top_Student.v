@@ -17,58 +17,93 @@ module Top_Student (
     btnL,
     btnR,
     btnD,
-    JAIn,
+    JAin,
     input [15:0] sw,
+    input PS2Data,
+    input PS2Clk,
     output [7:0] JB,
-    output [15:0] led,
     output [11:0] rgb,
+    output [7:0] seg,
+    output [15:0] led,
+    output [3:0] an,
     output hsync,
-    output vsync, JAOut
+    output vsync, JAout
 );
 
   import Data_Item::*;
 
-  parameter Task_4D_pw = (1 << 15) | (1 << 8) | (1 << 7) | (1 << 5) | (1 << 3) | (1 << 1) | (1 << 0);
-
   wire clk_6p25MHz, clk_1ms, segClk;
-  wire clkOneSec; wire state; //Ethan : stuff for the menu
+  wire clkOneSec;
+  wire state;  //Ethan : stuff for the menu
   wire frame_begin, sending_pixels, sample_pixel;
   wire [12:0] pixel_index;
-  wire [15:0] oled_data, oled_data_D, oled_data_menu;
-  wire [15:0] oled_data_E;
+  wire [15:0] oled_data, oled_game_map, oled_data_menu;
   wire [95:0] wall_tiles;
-  
-  assign oled_data_E = 16'hAAA;
+  wire [95:0] breakable_tiles;
+
+  reg  [15:0] score;
+  reg  [ 7:0] current_key;
+
+  //   assign led = current_key;
+  assign led[11:4] = 12'h000;
+
+  wire key_W, key_A, key_S, key_D, key_B, key_ENTER;
 
   // generte wall tiles 1 for wall 0 for no wall sparese
-  assign wall_tiles = 96'h000000000000F0000F000000;
+  assign wall_tiles         = 96'hFFF_945_C11_901_825_C81_829_FFF; // GAME MAP
+  assign breakable_tiles    = 96'h000_0AA_004_6B0_012_200_094_000;
 
+  // CLOCK GENERATOR
   slow_clock c1 (
       clk,
       16,
       clk_6p25MHz
   );
-  
-  slow_clock c2 (
-    clk, 
-    200000000, 
-    clkOneSec
-  );
-  
-  StateManager sM (
-    btnC, 
-    clk, 
-    state
-  );
-  
-  MainMenu menu (
-    pixel_index, 
-    clkOneSec,
-    state,
-    oled_data_menu
+
+  clock_generator_freq #(1) c3 (
+      clk,
+      clkOneSec
   );
 
-  
+  clock_generator_freq #(1000) c4 (
+      clk,
+      clk_1ms
+  );
+
+  keyboard k1 (
+      .clk(clk),
+      .PS2Data(PS2Data),
+      .PS2Clk(PS2Clk),
+      .pressed_key(current_key),
+      .key_W(key_W),
+      .key_A(key_A),
+      .key_S(key_S),
+      .key_D(key_D),
+      .key_B(key_B),
+      .key_ENTER(key_ENTER)
+  );
+
+  Score_Display s1 (
+      clk_1ms,
+      score,
+      seg,
+      an
+  );
+
+  StateManager sM (
+      (btnC | key_ENTER),
+      clk,
+      state
+  );
+
+  MainMenu menu (
+      pixel_index,
+      clkOneSec,
+      state,
+      oled_data_menu
+  );
+
+
   Oled_Display d1 (
       clk_6p25MHz,
       0,
@@ -85,36 +120,44 @@ module Top_Student (
       JB[6],
       JB[7]
   );
-  
+
+  Score_Tracker scoreTrack (
+      clkOneSec,
+      state,
+      score
+  );
+
   Map map (
       .clk(clk),
-      .btnD(btnD),
-      .btnU(btnU),
-      .btnL(btnL),
-      .btnR(btnR),
-      .btnC(btnC),
-      .en(sw == Task_4D_pw),
-      .JAIn(JAIn),
-      .JAOut(JAOut),
-      .wall_tiles(wall_tiles),
+      .btnD(btnD | key_S),
+      .btnU(btnU | key_W),
+      .btnL(btnL | key_A),
+      .btnR(btnR | key_D),
+      .btnC(btnC | key_B),
+      .en(state),
+      .JAin(JAin),
       .pixel_index(pixel_index),
-      .pixel_data(oled_data_D),
-      .led(led)
+      .wall_tiles(wall_tiles),
+      .JAout(JAout),
+      .bombs(led[15:12]),
+      .led(led[3:0]),
+      .breakable_tiles(breakable_tiles),
+      .pixel_data(oled_game_map)
   );
-  
+
 
   OLED_to_VGA game_to_vga (
-      .clk_100MHz(clk),
+      .clk(clk),
       .pixel_data(oled_data),
+      .score(score),
       .pixel_index(pixel_index),
       .hsync(hsync),
       .vsync(vsync),
+      .bombs(led[15:12]),
       .rgb(rgb)
   );
 
 
-  assign oled_data = (!state) ? oled_data_menu : 
-                     (sw == Task_4D_pw) ? oled_data_D :
-                     oled_data_E;
+  assign oled_data = (!state) ? oled_data_menu : oled_game_map;
 
 endmodule

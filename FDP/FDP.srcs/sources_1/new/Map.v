@@ -8,145 +8,264 @@ module Map (
     btnR,
     btnC,
     en,
-    input [1:0] JA, //for UART 
+    input JAin, //for UARTRx
     input [12:0] pixel_index,
     input [95:0] wall_tiles,
+    output JAout, //for UARTTx
+    output [3:0] led,
+    input [95:0] breakable_tiles,
+    output [3:0] bombs,
     output [15:0] pixel_data
 );
-  // Grid parameters
+
+  // Parameters
   parameter TILE_SIZE = 8;  // Tile size in pixels
   parameter GRID_WIDTH = 12;  // 12 tiles horizontally
   parameter GRID_HEIGHT = 8;  // 8 tiles vertically
   parameter SCREEN_WIDTH = 96;  // Screen width in pixels
   parameter SCREEN_HEIGHT = 64;  // Screen height in pixels
 
-  // Default location
-  parameter GREEN_X_TILE = 0;
-  parameter GREEN_Y_TILE = 4;
-  parameter YELLOW_X_TILE = 3;
+  // Starting positions
+  parameter GREEN_X_TILE = 1;
+  parameter GREEN_Y_TILE = 1;
+  parameter YELLOW_X_TILE = 10;
   parameter YELLOW_Y_TILE = 6;
 
-  // movement control registers
-  reg  [ 2:0] green_move;  // 1: up, 2: right, 3: down, 4: left
-  reg  [ 2:0] yellow_move;  // 1: up, 2: right, 3: down, 4: left
+  // Clock signals
+  wire clk1p0;  // 1Hz clock for movement updates
 
-  // Position registers
-  reg  [ 7:0] greenXTile;
-  reg  [ 7:0] greenYTile;
-  reg  [ 7:0] yellowXTile;
-  reg  [ 7:0] yellowYTile;
+  // Player and enemy position registers
+  reg [3:0] userXTile, userYTile, botXTile, botYTile;
+  wire [3:0] newGreenXTile, newGreenYTile, newYellowXTile, newYellowYTile;
 
-  wire [ 7:0] newGreenXTile;
-  wire [ 7:0] newGreenYTile;
-  wire [ 7:0] newYellowXTile;
-  wire [ 7:0] newYellowYTile;
+  // Movement signals
+  reg  [2:0] user_move;  // 1: up, 2: right, 3: down, 4: left
+  wire [2:0] bot_move_wire;  // Bot movement wire from AI
 
-  // Game state registers
-  reg  [95:0] bomb_tiles;  // Bomb placement bitmap
-  reg  [ 3:0] bomb_countdown;  // Countdown
-  reg         dropBomb;
+  // Bomb management
+  reg [3:0] bombX[1:0], bombY[1:0];
+  reg bomb_en[1:0];
+  reg [3:0] bomb_countdown, bomb_countdown_enemy;
+  wire dropBomb, dropBomb_enemy;
+  reg [2:0] player_bombs_count = 4, enemy_bombs_count = 4;
 
-  // Add new registers for yellow block and random generator
-  reg  [15:0] random_seed;  // Random seed for yellow green_movement
+  // Button management
+  wire btnC_debounced;
+  reg btnC_prev, btnC_enemy_prev;
+  wire btnC_posedge, btnC_enemy_posedge;
+  wire btnC_enemy;
 
-  wire        clk1p0;
+  // State tracking to prevent accidental bomb placement on first enable
+  reg module_was_enabled = 0;
+  reg first_enable_btnC_pressed = 0;
 
+  // Random number generation
+  reg [15:0] random_seed;
+
+  // Clock Divider for game timing
   slow_clock c1 (
       .clk(clk),
       .period(1_000_000),
       .slow_clock(clk1p0)
   );
 
-  // Module instantiation
-  drawCordinate draw (
-      .cordinateIndex(pixel_index),
-      .greenX        (greenXTile * TILE_SIZE),
-      .greenY        (greenYTile * TILE_SIZE),
-      .yellowX       (yellowXTile * TILE_SIZE),
-      .yellowY       (yellowYTile * TILE_SIZE),
-      .wall_tiles    (wall_tiles),
-      .bomb_tiles    (bomb_tiles),
-      .oledColour    (pixel_data)
+  // Button Debounce and Edge Detection
+  switch_debounce debounce_btnC (
+      .clk(clk),
+      .debound_count(5000),
+      .btn(btnC),
+      .btn_state(btnC_debounced)
   );
 
-  is_collision is_wall_green (
-      .x_cur(greenXTile),
-      .y_cur(greenYTile),
+  // Button edge detection logic
+  assign btnC_posedge = btnC_debounced & ~btnC_prev;
+  assign btnC_enemy_posedge = btnC_enemy & ~btnC_enemy_prev;
+
+  // Drawing logic for OLED display
+  drawCordinate draw (
+      .cordinateIndex(pixel_index),
+      .userX(userXTile * TILE_SIZE),
+      .userY(userYTile * TILE_SIZE),
+      .botX(botXTile * TILE_SIZE),
+      .botY(botYTile * TILE_SIZE),
       .wall_tiles(wall_tiles),
-      .direction(green_move),
+      .breakable_tiles(breakable_tiles),
+      .bomb_en({bomb_en[0], bomb_en[1]}),
+      .bomb_X({bombX[0] * TILE_SIZE, bombX[1] * TILE_SIZE}),
+      .bomb_Y({bombY[0] * TILE_SIZE, bombY[1] * TILE_SIZE}),
+      .oledColour(pixel_data)
+  );
+
+  // Collision detection for player
+  is_collision is_wall_user (
+      .x_cur(userXTile),
+      .y_cur(userYTile),
+      .wall_tiles(wall_tiles),
+      .breakable_tiles(breakable_tiles),
+      .direction(user_move),
       .en(en),
       .x_out(newGreenXTile),
       .y_out(newGreenYTile)
   );
 
-  is_collision is_wall_yellow (
-      .x_cur(yellowXTile),
-      .y_cur(yellowYTile),
+  // Collision detection for enemy
+  is_collision is_wall_bot (
+      .x_cur(botXTile),
+      .y_cur(botYTile),
       .wall_tiles(wall_tiles),
-      .direction(yellow_move),
+      .breakable_tiles(breakable_tiles),
+      .direction(bot_move_wire),
       .en(en),
       .x_out(newYellowXTile),
       .y_out(newYellowYTile)
   );
   
   //UART TRANSMISSION
-    reg tx_start, rx_receiving;
+    reg tx_start;
+    reg rx_receiving = 0;
     reg [15:0] data;
     wire busy;
-    UartTx send (clk, tx_start, rx_receiving, data, JA[0], busy);
+    UartTx send (clk, tx_start, rx_receiving, data, JAout, busy);
+    
+  //UART RECEIVE
+    wire valid, isReceiving;
+    wire [2:0] packetType;
+    wire [12:0] dataReceived;
+    UartRx receive (
+        .rx(JAin),
+        .clk(clk),
+        .packetType(packetType),
+        .data(dataReceived),
+        .valid(valid),
+        .isReceiving(isReceiving)
+    );
+    
+    //Transmission Buffer (FIFO)
+    reg readEn, writeEn; //enables read and write resp.
+    reg [15:0] writeData; //data written into the buffer
+    wire empty, full; //check if empty or full
+    wire [15:0] readData; //data written from the buffer
+    FIFOReg txBuffer (readEn, writeEn, clk, writeData, empty, full, readData);
+   
     
     
 
-  // Initialization block           
+  // Enemy AI movement controller
+  enemy_movement enemy_move (
+      .clk(clk1p0),
+      .en(en),
+      .botX(botXTile),
+      .botY(botYTile),
+      .userX(userXTile),
+      .userY(userYTile),
+      .bomb_en({bomb_en[0], bomb_en[1]}),
+      .bomb_X({bombX[0], bombX[1]}),
+      .bomb_Y({bombY[0], bombY[1]}),
+      .wall_tiles(wall_tiles),
+      .breakable_tiles(breakable_tiles),
+      .random_number(random_seed),
+      .dropBomb(btnC_enemy),
+      .led(led),
+      .direction(bot_move_wire)
+  );
+
+  // Initialization
   initial begin
-    greenXTile     = GREEN_X_TILE;
-    greenYTile     = GREEN_Y_TILE;
-    yellowXTile    = YELLOW_X_TILE;
-    yellowYTile    = YELLOW_Y_TILE;
-    green_move     = 0;
-    yellow_move    = 0;
-    bomb_tiles     = 0;
+    userXTile = GREEN_X_TILE;
+    userYTile = GREEN_Y_TILE;
+    botXTile = YELLOW_X_TILE;
+    botYTile = YELLOW_Y_TILE;
+    user_move = 0;
     bomb_countdown = 0;
-    dropBomb       = 0;
-    random_seed    = 16'hACE1;  // Non-zero seed value
+    bomb_countdown_enemy = 0;
+    bomb_en[0] = 0;
+    bomb_en[1] = 0;
+    random_seed = 16'hACE1;
+    module_was_enabled = 0;
+    first_enable_btnC_pressed = 0;
   end
 
-  // Clock division and input processing
+  // Bomb placement logic
+  assign dropBomb = (en && player_bombs_count != 0 && module_was_enabled && !first_enable_btnC_pressed) ? btnC_posedge : 0;
+  assign dropBomb_enemy = (en && enemy_bombs_count != 0) ? btnC_enemy_posedge : 0;
+
+  // Input processing and bomb management (fast clock domain)
   always @(posedge clk) begin
-    green_move <= en ? (btnU ? 1 :
-                       (btnR ? 2 : 
-                       (btnD ? 3 : 
-                       (btnL ? 4 : 0)))) : 0;
+    if (en) begin
+      btnC_prev <= btnC_debounced;
+      btnC_enemy_prev <= btnC_enemy;
+      
+      // Process directional input
+      user_move <= btnU ? 1 : (btnR ? 2 : (btnD ? 3 : (btnL ? 4 : 0)));
 
-    dropBomb <= en ? (bomb_countdown == 10) ? 0 : dropBomb | btnC : 0;
+      // Track first enable state
+      if (!module_was_enabled) begin
+        module_was_enabled <= 1;
+        first_enable_btnC_pressed <= btnC_debounced;
+      end else if (first_enable_btnC_pressed && !btnC_debounced) begin
+        // Reset the flag once the initial button press is released
+        first_enable_btnC_pressed <= 0;
+      end
 
-    // Set bomb at current position when center button pressed
-    if (en && btnC) begin
-      bomb_tiles <= bomb_tiles | (1 << ((greenYTile) * GRID_WIDTH + (greenXTile)));
-    end else if (bomb_countdown == 0) begin
-      bomb_tiles <= 0;
+      // Handle player bomb placement
+      if (dropBomb) begin
+        bombX[0] <= userXTile;
+        bombY[0] <= userYTile;
+        bomb_en[0] <= 1;
+        player_bombs_count <= player_bombs_count - 1;
+      end
+
+      // Handle enemy bomb placement
+      if (dropBomb_enemy) begin
+        bombX[1] <= botXTile;
+        bombY[1] <= botYTile;
+        bomb_en[1] <= 1;
+        enemy_bombs_count <= enemy_bombs_count - 1;
+      end
+      if (!empty && !busy) begin
+        readEn <= 1'b1;
+        data = readData;
+      end else begin
+        readEn <= 1'b0;
+      end  
+      
+      // Reset bomb status when countdown reaches zero
+      if (bomb_countdown == 0) bomb_en[0] <= 0;
+      if (bomb_countdown_enemy == 0) bomb_en[1] <= 0;
     end else begin
-      bomb_tiles <= bomb_tiles;
+      // Reset the enabled state when the module is disabled
+      module_was_enabled <= 0;
+      first_enable_btnC_pressed <= 0;
     end
   end
 
-  always @(posedge clk1p0) begin //Movement Processing
+  // Game state updates (slow clock domain)
+  always @(posedge clk1p0) begin
+    // Update bomb countdown timers
     random_seed <= {
-        random_seed[14:0], random_seed[15] ^ random_seed[13] ^ random_seed[12] ^ random_seed[10]
-      };
-    if (en && greenXTile != newGreenXTile && 
-        greenYTile != newGreenYTile && ~busy) begin  
-        data[15:13] = 3'b001;
-        data[12:0] = newGreenYTile * 12 + newGreenXTile;
-    end
-    greenXTile <= en ? newGreenXTile : GREEN_X_TILE;
-    greenYTile <= en ? newGreenYTile : GREEN_Y_TILE;
-     
-    yellowXTile <= en ? newYellowXTile : YELLOW_X_TILE;
-    yellowYTile <= en ? newYellowYTile : YELLOW_Y_TILE;
+      random_seed[14:0], random_seed[15] ^ random_seed[13] ^ random_seed[12] ^ random_seed[10]
+    };
 
-    yellow_move <= en ? (random_seed[1:0] + 1) : 0;
-    bomb_countdown <= dropBomb ? 10 : bomb_countdown > 0 ? bomb_countdown - 1 : 0;
+    bomb_countdown <= bomb_en[0] ? bomb_countdown - 1 : 10;
+    bomb_countdown_enemy <= bomb_en[1] ? bomb_countdown_enemy - 1 : 10;
+    
+    // Update player positions
+    if ((newGreenXTile != userXTile | newGreenYTile != userYTile) & !full) begin
+        writeData <= {3'b000, newGreenYTile * 8 + newGreenXTile};
+        writeEn <= 1'b1;
+    end else writeEn <= 1'b0;
+    userXTile <= en ? newGreenXTile : GREEN_X_TILE;
+    userYTile <= en ? newGreenYTile : GREEN_Y_TILE;
+    botXTile <= en ? newYellowXTile : YELLOW_X_TILE;
+    botYTile <= en ? newYellowYTile : YELLOW_Y_TILE;
+    
   end
+
+  // Bomb count indicator for LEDs
+  assign bombs = player_bombs_count == 4 ? 4'b1111 : 
+                 player_bombs_count == 3 ? 4'b0111 : 
+                 player_bombs_count == 2 ? 4'b0011 : 
+                 player_bombs_count == 1 ? 4'b0001 : 
+                 4'b0000;
 
 endmodule
