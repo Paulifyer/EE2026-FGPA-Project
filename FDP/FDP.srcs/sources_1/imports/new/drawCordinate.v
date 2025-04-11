@@ -6,6 +6,7 @@ module drawCordinate (
     input [6:0] bot_index,
     input [95:0] wall_tiles,
     input [95:0] breakable_tiles,
+    input [95:0] explosion_display,
     input [13:0] bomb_indices,
     input [1:0] bomb_en,
     output [15:0] oledColour
@@ -42,6 +43,7 @@ module drawCordinate (
 
   wire isWall = wall_tiles[tileIndex];
   wire isBreakable = breakable_tiles[tileIndex];
+  wire exploded = explosion_display[tileIndex];
   
   wire [5:0] tilePixelIndex = localY * TILE_WIDTH + localX;
   
@@ -57,7 +59,7 @@ module drawCordinate (
 
   // Assign color based on tile type: bomb has highest priority.
   assign objectColour = ~wallActive & isWall ? WALL_COLOUR : 
-                        (~brickActive & isBreakable ? BRICK_COLOUR : BLACK_COLOUR);
+                        (~brickActive & isBreakable ? BRICK_COLOUR : (exploded ? 16'h2945 : BLACK_COLOUR));
 
   // Instantiate drawSquare for user and bot blocks with index-based approach
   drawSquare #(8) userSquare (
