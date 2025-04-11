@@ -13,7 +13,8 @@ module bomb(
     input [13:0] bomb_time, /* Time taken for bomb to explode in milisecond */
     output reg [95:0] after_break_tiles,
     output [20:0] position_bomb_o,
-    output reg [2:0] after_player_health
+    output reg [2:0] after_player_health,
+    output reg [2:0] start_bomb = 0 /* To enable countdown for bomb */
     );
     
     wire clk_1ms, btnC_state;;
@@ -31,9 +32,9 @@ module bomb(
     reg [2:0] bomb_wall_collision, bomb_screen_collision, bomb_constraint;
     
     slow_clock c0 (clk, 100000, clk_1ms);
-    time_bomb_explosion t0 (clk_1ms, position_bomb[0]!=127, bomb_time, explode_bomb[0]);
-    time_bomb_explosion t1 (clk_1ms, position_bomb[1]!=127, bomb_time, explode_bomb[1]);
-    time_bomb_explosion t2 (clk_1ms, position_bomb[2]!=127, bomb_time, explode_bomb[2]);
+    time_bomb_explosion t0 (clk_1ms, start_bomb[0], bomb_time, explode_bomb[0]);
+    time_bomb_explosion t1 (clk_1ms, start_bomb[1], bomb_time, explode_bomb[1]);
+    time_bomb_explosion t2 (clk_1ms, start_bomb[2], bomb_time, explode_bomb[2]);
     switch_debounce d1 (clk, 200, btnC, btnC_state); /* Prevent multiple placment of bomb*/
     
     assign position_bomb_o = {7'(position_bomb[2]),7'(position_bomb[1]),7'(position_bomb[0])};
@@ -52,26 +53,35 @@ module bomb(
             */
             previous_player_index = player_index; /* Ensure bomb is place at player index */
             player_not_on_bomb = position_bomb[0] != player_index & position_bomb[1] != player_index & position_bomb[2] != player_index;
-            if (position_bomb[0] == 127 && player_not_on_bomb)
+            if (position_bomb[0] == 127 && player_not_on_bomb) begin
                 position_bomb[0] <= player_index;
-            else if (bomb_limit > 1 && position_bomb[1] == 127 && player_not_on_bomb)
+                start_bomb[0] = 1;
+            end
+            else if (bomb_limit > 1 && position_bomb[1] == 127 && player_not_on_bomb) begin
                 position_bomb[1] <= player_index;
-            else if (bomb_limit > 2 && position_bomb[2] == 127 && player_not_on_bomb)
+                start_bomb[1] = 1;
+            end
+            else if (bomb_limit > 2 && position_bomb[2] == 127 && player_not_on_bomb) begin
                 position_bomb[2] <= player_index;
+                start_bomb[2] = 1;
+            end
         end
         if (explode_bomb) begin
             /* Determine which bomb exploded and remove it */
             if (explode_bomb[0]) begin
                 bomb_index <= position_bomb[0];
                 position_bomb[0] <= 127;
+                start_bomb[0] = 0;
             end
             else if (explode_bomb[1]) begin
                 bomb_index <= position_bomb[1];
                 position_bomb[1] <= 127;
+                start_bomb[1] = 0;
             end
             else if (explode_bomb[2]) begin
                 bomb_index <= position_bomb[2];
                 position_bomb[2] <= 127;
+                start_bomb[2] = 0;
             end
             else bomb_index <= 127;
             /* Bomb explosion destroy nearest breakable wall within it bomb range and reduce player health if hit */
