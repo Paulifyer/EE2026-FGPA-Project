@@ -356,7 +356,7 @@ module enemy_movement (
   task handle_bomb_dropping;
     begin
       dropBomb <= ((new_botX == userX || new_botY == userY) && 
-                  random_number[3:0] < 4'b0100) && 
+                  random_number[3:0] < 4'b1000) && 
                   (~is_in_bomb_line(new_botX, new_botY));
     end
   endtask

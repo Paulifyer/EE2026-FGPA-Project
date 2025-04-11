@@ -50,8 +50,16 @@ module Top_Student (
   wire key_W, key_A, key_S, key_D, key_B, key_ENTER;
 
   // generte wall tiles 1 for wall 0 for no wall sparese
-  assign wall_tiles         = 96'hFFF_945_C11_901_825_C81_829_FFF; // GAME MAP
-  assign breakable_tiles    = 96'h000_0AA_004_6B0_012_200_094_000;
+  assign wall_tiles      = 96'hFFF_945_C11_901_825_C81_829_FFF;  // GAME MAP
+  assign breakable_tiles = 96'h000_0AA_004_6B0_012_200_094_000;
+
+  wire keyUP, keyDOWN, keyLEFT, keyRIGHT, keyBOMB, keySELECT;
+  assign keyUP    = btnU | key_W;
+  assign keyDOWN  = btnD | key_S;
+  assign keyLEFT  = btnL | key_A;
+  assign keyRIGHT = btnR | key_D;
+  assign keyBOMB = btnC | key_B;
+    assign keySELECT = btnC | key_ENTER;
 
   // CLOCK GENERATOR
   slow_clock c1 (
@@ -91,7 +99,7 @@ module Top_Student (
   );
 
   StateManager sM (
-      (btnC | key_ENTER),
+      keySELECT,
       clk,
       state
   );
@@ -129,11 +137,11 @@ module Top_Student (
 
   Map map (
       .clk(clk),
-      .btnD(btnD | key_S),
-      .btnU(btnU | key_W),
-      .btnL(btnL | key_A),
-      .btnR(btnR | key_D),
-      .btnC(btnC | key_B),
+      .keyDOWN(keyDOWN),
+      .keyUP(keyUP),
+      .keyLEFT(keyLEFT),
+      .keyRIGHT(keyRIGHT),
+      .keyBOMB(keyBOMB),
       .en(state),
       .pixel_index(pixel_index),
       .wall_tiles(wall_tiles),

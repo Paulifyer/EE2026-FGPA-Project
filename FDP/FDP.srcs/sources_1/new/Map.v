@@ -2,11 +2,11 @@
 
 module Map (
     input clk,
-    btnD,
-    btnU,
-    btnL,
-    btnR,
-    btnC,
+    keyDOWN,
+    keyUP,
+    keyLEFT,
+    keyRIGHT,
+    keyBOMB,
     en,
     input [12:0] pixel_index,
     input [95:0] wall_tiles,
@@ -48,14 +48,14 @@ module Map (
   reg [2:0] player_bombs_count = 4, enemy_bombs_count = 4;
 
   // Button management
-  wire btnC_debounced;
-  reg btnC_prev, btnC_enemy_prev;
-  wire btnC_posedge, btnC_enemy_posedge;
-  wire btnC_enemy;
+  wire keyBOMB_debounced;
+  reg keyBOMB_prev, keyBOMB_enemy_prev;
+  wire keyBOMB_posedge, keyBOMB_enemy_posedge;
+  wire keyBOMB_enemy;
 
   // State tracking to prevent accidental bomb placement on first enable
   reg module_was_enabled = 0;
-  reg first_enable_btnC_pressed = 0;
+  reg first_enable_keyBOMB_pressed = 0;
 
   // Random number generation
   reg [15:0] random_seed;
@@ -68,16 +68,16 @@ module Map (
   );
 
   // Button Debounce and Edge Detection
-  switch_debounce debounce_btnC (
+  switch_debounce debounce_keyBOMB (
       .clk(clk),
-      .debound_count(5000),
-      .btn(btnC),
-      .btn_state(btnC_debounced)
+      .debound_count(50000),
+      .btn(keyBOMB),
+      .btn_state(keyBOMB_debounced)
   );
 
   // Button edge detection logic
-  assign btnC_posedge = btnC_debounced & ~btnC_prev;
-  assign btnC_enemy_posedge = btnC_enemy & ~btnC_enemy_prev;
+  assign keyBOMB_posedge = keyBOMB_debounced & ~keyBOMB_prev;
+  assign keyBOMB_enemy_posedge = keyBOMB_enemy & ~keyBOMB_enemy_prev;
 
   // Drawing logic for OLED display
   drawCordinate draw (
@@ -132,8 +132,7 @@ module Map (
       .wall_tiles(wall_tiles),
       .breakable_tiles(breakable_tiles),
       .random_number(random_seed),
-      .dropBomb(btnC_enemy),
-      .led(led),
+      .dropBomb(keyBOMB_enemy),
       .direction(bot_move_wire)
   );
 
@@ -150,29 +149,29 @@ module Map (
     bomb_en[1] = 0;
     random_seed = 16'hACE1;
     module_was_enabled = 0;
-    first_enable_btnC_pressed = 0;
+    first_enable_keyBOMB_pressed = 0;
   end
 
   // Bomb placement logic
-  assign dropBomb = (en && player_bombs_count != 0 && module_was_enabled && !first_enable_btnC_pressed) ? btnC_posedge : 0;
-  assign dropBomb_enemy = (en && enemy_bombs_count != 0) ? btnC_enemy_posedge : 0;
+  assign dropBomb = (en && player_bombs_count != 0 && module_was_enabled && !first_enable_keyBOMB_pressed) ? keyBOMB_posedge : 0;
+  assign dropBomb_enemy = (en && enemy_bombs_count != 0) ? keyBOMB_enemy_posedge : 0;
 
   // Input processing and bomb management (fast clock domain)
   always @(posedge clk) begin
     if (en) begin
-      btnC_prev <= btnC_debounced;
-      btnC_enemy_prev <= btnC_enemy;
+      keyBOMB_prev <= keyBOMB_debounced;
+      keyBOMB_enemy_prev <= keyBOMB_enemy;
 
       // Process directional input
-      user_move <= btnU ? 1 : (btnR ? 2 : (btnD ? 3 : (btnL ? 4 : 0)));
+      user_move <= keyUP ? 1 : (keyRIGHT ? 2 : (keyDOWN ? 3 : (keyLEFT ? 4 : 0)));
 
       // Track first enable state
       if (!module_was_enabled) begin
         module_was_enabled <= 1;
-        first_enable_btnC_pressed <= btnC_debounced;
-      end else if (first_enable_btnC_pressed && !btnC_debounced) begin
+        first_enable_keyBOMB_pressed <= keyBOMB_debounced;
+      end else if (first_enable_keyBOMB_pressed && !keyBOMB_debounced) begin
         // Reset the flag once the initial button press is released
-        first_enable_btnC_pressed <= 0;
+        first_enable_keyBOMB_pressed <= 0;
       end
 
       // Handle player bomb placement
@@ -197,7 +196,7 @@ module Map (
     end else begin
       // Reset the enabled state when the module is disabled
       module_was_enabled <= 0;
-      first_enable_btnC_pressed <= 0;
+      first_enable_keyBOMB_pressed <= 0;
     end
   end
 

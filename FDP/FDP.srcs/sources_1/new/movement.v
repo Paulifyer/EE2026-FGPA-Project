@@ -1,7 +1,7 @@
 `timescale 1ns / 1ps
 
 module Task_4D(
-    input clk, btnD, btnU, btnL, btnR, btnC, en,
+    input clk, keyDOWN, keyUP, keyLEFT, keyRIGHT, keyBOMB, en,
     input [12:0] pixel_index,
     input [95:0] wall_tiles, // Changed from [6:0] to [95:0] to account for all 96 tiles
     output [15:0] pixel_data
@@ -37,9 +37,9 @@ module Task_4D(
     always @(posedge clk) begin
         counter1p0k <= (counter1p0k != 16666660) ? counter1p0k + 1 :0;
         out1p0k <= (counter1p0k == 0) ? ~out1p0k: out1p0k;
-        move <= en ? btnU ? 1 : (btnR ? 2 : (btnD ? 3 : (btnL ? 4: 0))) : 0;
+        move <= en ? keyUP ? 1 : (keyRIGHT ? 2 : (keyDOWN ? 3 : (keyLEFT ? 4: 0))) : 0;
         move_ghost <= (counter1p0k % 4 == 0) ? $random % 4 : move_ghost;
-        bomb_tiles <= btnC ? (bomb_tiles | (1 << ((greenY / TILE_HEIGHT) * GRID_WIDTH + (greenX / TILE_WIDTH)))) : bomb_tiles;
+        bomb_tiles <= keyBOMB ? (bomb_tiles | (1 << ((greenY / TILE_HEIGHT) * GRID_WIDTH + (greenX / TILE_WIDTH)))) : bomb_tiles;
     end
     
     // Simplified function to check if a position would hit a wall

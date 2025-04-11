@@ -3,7 +3,7 @@
 import Data_Item::*;
 
 module bomb(
-    input clk, btnC, en, push_bomb_ability,
+    input clk, keyBOMB, en, push_bomb_ability,
     input [95:0] wall_tiles, breakable_tiles,
     input [20:0] other_position_bomb, /* Other players bomb */
     input [6:0] player_index,
@@ -17,7 +17,7 @@ module bomb(
     output reg [2:0] start_bomb = 0 /* To enable countdown for bomb */
     );
     
-    wire clk_1ms, btnC_state;;
+    wire clk_1ms, keyBOMB_state;;
     reg [6:0] position_bomb[2:0] = '{7'd127, 7'd127, 7'd127}; /* If bomb is not in used, it is place outside the map */
     reg [6:0] bomb_index, /* Single bomb index to calculate bomb explosion range in breakable tiles */
               bomb_offset, /* For pushing bomb */
@@ -35,7 +35,7 @@ module bomb(
     time_bomb_explosion t0 (clk_1ms, start_bomb[0], bomb_time, explode_bomb[0]);
     time_bomb_explosion t1 (clk_1ms, start_bomb[1], bomb_time, explode_bomb[1]);
     time_bomb_explosion t2 (clk_1ms, start_bomb[2], bomb_time, explode_bomb[2]);
-    switch_debounce d1 (clk, 200, btnC, btnC_state); /* Prevent multiple placment of bomb*/
+    switch_debounce d1 (clk, 200, keyBOMB, keyBOMB_state); /* Prevent multiple placment of bomb*/
     
     assign position_bomb_o = {7'(position_bomb[2]),7'(position_bomb[1]),7'(position_bomb[0])};
     
@@ -45,7 +45,7 @@ module bomb(
             after_break_tiles <= breakable_tiles;
             after_player_health <= player_health;
         end
-        else if (btnC_state) begin
+        else if (keyBOMB_state) begin
             /* Place the bombs under the player index if:
                - It is not in used (ouside of the map)
                - Not occupy by other bombs
