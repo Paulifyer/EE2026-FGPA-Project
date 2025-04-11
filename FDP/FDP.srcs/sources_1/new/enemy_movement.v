@@ -3,18 +3,14 @@
 module enemy_movement (
     input clk,
     input en,
-    input [3:0] botX,
-    input [3:0] botY,
-    input [3:0] userX,
-    input [3:0] userY,
-    input [3:0] bomb_X[1:0],
-    input [3:0] bomb_Y[1:0],
-    input bomb_en[1:0],
+    input [6:0] bot_index,
+    input [6:0] user_index,
+    input [13:0] bomb_indices,
+    input [1:0] bomb_en,
     input [95:0] wall_tiles,
     input [95:0] breakable_tiles,
     input [15:0] random_number,
     output reg dropBomb,
-    output [3:0] led,
     output reg [2:0] direction
 );
   // Grid parameters
@@ -46,12 +42,27 @@ module enemy_movement (
   reg [3:0] new_botX;
   reg [3:0] new_botY;
 
+  // Extract X/Y coordinates from indices for easier comparison
+  wire [3:0] botX = bot_index % GRID_WIDTH;
+  wire [3:0] botY = bot_index / GRID_WIDTH;
+  wire [3:0] userX = user_index % GRID_WIDTH;
+  wire [3:0] userY = user_index / GRID_WIDTH;
+
+  // Extract bomb X/Y coordinates from indices for easier comparison
+  wire [3:0] bomb_X[1:0];
+  wire [3:0] bomb_Y[1:0];
+
+  assign bomb_X[0] = bomb_indices[6:0] % GRID_WIDTH;
+  assign bomb_Y[0] = bomb_indices[6:0] / GRID_WIDTH;
+  assign bomb_X[1] = bomb_indices[13:7] % GRID_WIDTH;
+  assign bomb_Y[1] = bomb_indices[13:7] / GRID_WIDTH;
+
   // Distance calculation to player
   wire [3:0] dx_player = (botX > userX) ? (botX - userX) : (userX - botX);
   wire [3:0] dy_player = (botY > userY) ? (botY - userY) : (userY - botY);
   wire [3:0] dist_to_player = dx_player + dy_player;
 
-  // Bomb danger detection
+  // Bomb danger detection using extracted X/Y
   wire in_bomb1_danger = bomb_en[0] ? (botX == bomb_X[0] || botY == bomb_Y[0]) : 0;
   wire in_bomb2_danger = bomb_en[1] ? (botX == bomb_X[1] || botY == bomb_Y[1]) : 0;
   wire in_bomb_danger = in_bomb1_danger | in_bomb2_danger;
@@ -59,7 +70,7 @@ module enemy_movement (
   // Collision detection function
   function is_collision;
     input [3:0] test_x, test_y;
-    reg [5:0] tile_index;
+    reg [6:0] tile_index;
     begin
       tile_index   = test_y * GRID_WIDTH + test_x;
       is_collision = (tile_index < 96) && (wall_tiles[tile_index] || breakable_tiles[tile_index]);
@@ -351,17 +362,17 @@ module enemy_movement (
       endcase
     end
   endtask
+    wire [6:0] new_bot_index = new_botY * GRID_WIDTH + new_botX;
 
   // Handle bomb dropping logic
   task handle_bomb_dropping;
+
     begin
+      // Drop bomb if in the same row or column as the user and not already in a bomb line
       dropBomb <= ((new_botX == userX || new_botY == userY) && 
                   random_number[3:0] < 4'b1000) && 
                   (~is_in_bomb_line(new_botX, new_botY));
     end
   endtask
-
-  // LED output assignment
-  assign led[3:0] = direction;
 
 endmodule
