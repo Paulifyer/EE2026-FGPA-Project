@@ -50,8 +50,8 @@ module Top_Student (
   wire key_W, key_A, key_S, key_D, key_B, key_ENTER;
 
   // generte wall tiles 1 for wall 0 for no wall sparese
-  assign wall_tiles = 96'h000000000000F0000F000000;
-  assign breakable_tiles = 96'h0000000000000000000000FF;
+  assign wall_tiles         = 96'hFFF_945_C11_901_825_C81_829_FFF; // GAME MAP
+  assign breakable_tiles    = 96'h000_0AA_004_6B0_012_200_094_000;
 
   // CLOCK GENERATOR
   slow_clock c1 (

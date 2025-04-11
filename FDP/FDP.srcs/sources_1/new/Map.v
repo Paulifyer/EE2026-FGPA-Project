@@ -24,9 +24,9 @@ module Map (
   parameter SCREEN_HEIGHT = 64;  // Screen height in pixels
 
   // Starting positions
-  parameter GREEN_X_TILE = 0;
-  parameter GREEN_Y_TILE = 4;
-  parameter YELLOW_X_TILE = 3;
+  parameter GREEN_X_TILE = 1;
+  parameter GREEN_Y_TILE = 1;
+  parameter YELLOW_X_TILE = 10;
   parameter YELLOW_Y_TILE = 6;
 
   // Clock signals
