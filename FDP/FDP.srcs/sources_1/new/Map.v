@@ -53,6 +53,10 @@ module Map (
   wire btnC_posedge, btnC_enemy_posedge;
   wire btnC_enemy;
 
+  // State tracking to prevent accidental bomb placement on first enable
+  reg module_was_enabled = 0;
+  reg first_enable_btnC_pressed = 0;
+
   // Random number generation
   reg [15:0] random_seed;
 
@@ -145,10 +149,12 @@ module Map (
     bomb_en[0] = 0;
     bomb_en[1] = 0;
     random_seed = 16'hACE1;
+    module_was_enabled = 0;
+    first_enable_btnC_pressed = 0;
   end
 
   // Bomb placement logic
-  assign dropBomb = (en && player_bombs_count != 0) ? btnC_posedge : 0;
+  assign dropBomb = (en && player_bombs_count != 0 && module_was_enabled && !first_enable_btnC_pressed) ? btnC_posedge : 0;
   assign dropBomb_enemy = (en && enemy_bombs_count != 0) ? btnC_enemy_posedge : 0;
 
   // Input processing and bomb management (fast clock domain)
@@ -159,6 +165,15 @@ module Map (
 
       // Process directional input
       user_move <= btnU ? 1 : (btnR ? 2 : (btnD ? 3 : (btnL ? 4 : 0)));
+
+      // Track first enable state
+      if (!module_was_enabled) begin
+        module_was_enabled <= 1;
+        first_enable_btnC_pressed <= btnC_debounced;
+      end else if (first_enable_btnC_pressed && !btnC_debounced) begin
+        // Reset the flag once the initial button press is released
+        first_enable_btnC_pressed <= 0;
+      end
 
       // Handle player bomb placement
       if (dropBomb) begin
@@ -179,6 +194,10 @@ module Map (
       // Reset bomb status when countdown reaches zero
       if (bomb_countdown == 0) bomb_en[0] <= 0;
       if (bomb_countdown_enemy == 0) bomb_en[1] <= 0;
+    end else begin
+      // Reset the enabled state when the module is disabled
+      module_was_enabled <= 0;
+      first_enable_btnC_pressed <= 0;
     end
   end
 
@@ -186,9 +205,9 @@ module Map (
   always @(posedge clk1p0) begin
     // Update bomb countdown timers
     random_seed <= {
-        random_seed[14:0], random_seed[15] ^ random_seed[13] ^ random_seed[12] ^ random_seed[10]
-      };
-      
+      random_seed[14:0], random_seed[15] ^ random_seed[13] ^ random_seed[12] ^ random_seed[10]
+    };
+
     bomb_countdown <= bomb_en[0] ? bomb_countdown - 1 : 10;
     bomb_countdown_enemy <= bomb_en[1] ? bomb_countdown_enemy - 1 : 10;
 
