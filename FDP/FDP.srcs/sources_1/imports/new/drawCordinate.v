@@ -63,7 +63,7 @@ module drawCordinate (
   drawSquare #(8) userSquare (
       .tile_index(user_index),
       .colour(CAT_COLOUR),
-      .squareData(CAT_SPRITE_DATA),
+      .squareData(CAT_SPRITE_LEFT_DATA),
       .cordinateIndex(cordinateIndex),
       .oledColour(userSquareColour)
   );
@@ -71,7 +71,7 @@ module drawCordinate (
   drawSquare #(8) botSquare (
       .tile_index(bot_index),
       .colour(DINO_COLOUR),
-      .squareData(DINO_SPRITE_DATA),
+      .squareData(DINO_SPRITE_LEFT_DATA),
       .cordinateIndex(cordinateIndex),
       .oledColour(botSquareColour)
   );
