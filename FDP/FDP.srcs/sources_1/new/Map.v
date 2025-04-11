@@ -24,25 +24,25 @@ module Map (
   parameter SCREEN_HEIGHT = 64;  // Screen height in pixels
 
   // Starting positions
-  parameter GREEN_X_TILE = 1;
-  parameter GREEN_Y_TILE = 1;
-  parameter YELLOW_X_TILE = 10;
+  parameter GREEN_X_TILE = 0;
+  parameter GREEN_Y_TILE = 4;
+  parameter YELLOW_X_TILE = 3;
   parameter YELLOW_Y_TILE = 6;
 
   // Clock signals
   wire clk1p0;  // 1Hz clock for movement updates
 
-  // Player and enemy position registers
-  reg [3:0] userXTile, userYTile, botXTile, botYTile;
-  wire [3:0] newGreenXTile, newGreenYTile, newYellowXTile, newYellowYTile;
-
+  // Player and enemy position registers as indices
+  reg [6:0] user_index, bot_index;
+  wire [6:0] new_user_index, new_bot_index;
+  
   // Movement signals
   reg  [2:0] user_move;  // 1: up, 2: right, 3: down, 4: left
   wire [2:0] bot_move_wire;  // Bot movement wire from AI
 
   // Bomb management
-  reg [3:0] bombX[1:0], bombY[1:0];
-  reg bomb_en[1:0];
+  reg [13:0] bomb_indices; // 14 bits: [13:7] for enemy bomb, [6:0] for player bomb
+  reg [1:0] bomb_en;
   reg [3:0] bomb_countdown, bomb_countdown_enemy;
   wire dropBomb, dropBomb_enemy;
   reg [2:0] player_bombs_count = 4, enemy_bombs_count = 4;
@@ -70,7 +70,7 @@ module Map (
   // Button Debounce and Edge Detection
   switch_debounce debounce_btnC (
       .clk(clk),
-      .debound_count(5000),
+      .debound_count(50000),
       .btn(btnC),
       .btn_state(btnC_debounced)
   );
@@ -82,72 +82,59 @@ module Map (
   // Drawing logic for OLED display
   drawCordinate draw (
       .cordinateIndex(pixel_index),
-      .userX(userXTile * TILE_SIZE),
-      .userY(userYTile * TILE_SIZE),
-      .botX(botXTile * TILE_SIZE),
-      .botY(botYTile * TILE_SIZE),
+      .user_index(user_index),
+      .bot_index(bot_index),
       .wall_tiles(wall_tiles),
       .breakable_tiles(breakable_tiles),
-      .bomb_en({bomb_en[0], bomb_en[1]}),
-      .bomb_X({bombX[0] * TILE_SIZE, bombX[1] * TILE_SIZE}),
-      .bomb_Y({bombY[0] * TILE_SIZE, bombY[1] * TILE_SIZE}),
+      .bomb_indices(bomb_indices),
+      .bomb_en(bomb_en),
       .oledColour(pixel_data)
   );
 
   // Collision detection for player
   is_collision is_wall_user (
-      .x_cur(userXTile),
-      .y_cur(userYTile),
+      .cur_index(user_index),
       .wall_tiles(wall_tiles),
       .breakable_tiles(breakable_tiles),
       .direction(user_move),
       .en(en),
-      .x_out(newGreenXTile),
-      .y_out(newGreenYTile)
+      .new_index(new_user_index)
   );
 
   // Collision detection for enemy
   is_collision is_wall_bot (
-      .x_cur(botXTile),
-      .y_cur(botYTile),
+      .cur_index(bot_index),
       .wall_tiles(wall_tiles),
       .breakable_tiles(breakable_tiles),
       .direction(bot_move_wire),
       .en(en),
-      .x_out(newYellowXTile),
-      .y_out(newYellowYTile)
+      .new_index(new_bot_index)
   );
 
   // Enemy AI movement controller
   enemy_movement enemy_move (
       .clk(clk1p0),
       .en(en),
-      .botX(botXTile),
-      .botY(botYTile),
-      .userX(userXTile),
-      .userY(userYTile),
-      .bomb_en({bomb_en[0], bomb_en[1]}),
-      .bomb_X({bombX[0], bombX[1]}),
-      .bomb_Y({bombY[0], bombY[1]}),
+      .bot_index(bot_index),
+      .user_index(user_index),
+      .bomb_indices(bomb_indices),
+      .bomb_en(bomb_en),
       .wall_tiles(wall_tiles),
       .breakable_tiles(breakable_tiles),
       .random_number(random_seed),
       .dropBomb(btnC_enemy),
-      .led(led),
       .direction(bot_move_wire)
   );
 
   // Initialization
   initial begin
-    userXTile = GREEN_X_TILE;
-    userYTile = GREEN_Y_TILE;
-    botXTile = YELLOW_X_TILE;
-    botYTile = YELLOW_Y_TILE;
+    user_index = GREEN_Y_TILE * GRID_WIDTH + GREEN_X_TILE;
+    bot_index = YELLOW_Y_TILE * GRID_WIDTH + YELLOW_X_TILE;
     user_move = 0;
     bomb_countdown = 0;
     bomb_countdown_enemy = 0;
-    bomb_en[0] = 0;
-    bomb_en[1] = 0;
+    bomb_en = 2'b00;
+    bomb_indices = 0;
     random_seed = 16'hACE1;
     module_was_enabled = 0;
     first_enable_btnC_pressed = 0;
@@ -177,16 +164,14 @@ module Map (
 
       // Handle player bomb placement
       if (dropBomb) begin
-        bombX[0] <= userXTile;
-        bombY[0] <= userYTile;
+        bomb_indices[6:0] <= user_index; // Player bomb index
         bomb_en[0] <= 1;
         player_bombs_count <= player_bombs_count - 1;
       end
 
       // Handle enemy bomb placement
       if (dropBomb_enemy) begin
-        bombX[1] <= botXTile;
-        bombY[1] <= botYTile;
+        bomb_indices[13:7] <= bot_index; // Enemy bomb index
         bomb_en[1] <= 1;
         enemy_bombs_count <= enemy_bombs_count - 1;
       end
@@ -211,11 +196,9 @@ module Map (
     bomb_countdown <= bomb_en[0] ? bomb_countdown - 1 : 10;
     bomb_countdown_enemy <= bomb_en[1] ? bomb_countdown_enemy - 1 : 10;
 
-    // Update player positions
-    userXTile <= en ? newGreenXTile : GREEN_X_TILE;
-    userYTile <= en ? newGreenYTile : GREEN_Y_TILE;
-    botXTile <= en ? newYellowXTile : YELLOW_X_TILE;
-    botYTile <= en ? newYellowYTile : YELLOW_Y_TILE;
+    // Update player positions using indices
+    user_index <= en ? new_user_index : (GREEN_Y_TILE * GRID_WIDTH + GREEN_X_TILE);
+    bot_index <= en ? new_bot_index : (YELLOW_Y_TILE * GRID_WIDTH + YELLOW_X_TILE);
   end
 
   // Bomb count indicator for LEDs
