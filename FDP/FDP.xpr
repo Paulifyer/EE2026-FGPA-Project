@@ -326,14 +326,6 @@
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PSRCDIR/sources_1/new/HealthDisplay.v">
-        <FileInfo>
-          <Attr Name="AutoDisabled" Val="1"/>
-          <Attr Name="UsedIn" Val="synthesis"/>
-          <Attr Name="UsedIn" Val="implementation"/>
-          <Attr Name="UsedIn" Val="simulation"/>
-        </FileInfo>
-      </File>
       <File Path="$PSRCDIR/sources_1/imports/hdl/bin2ascii.v">
         <FileInfo>
           <Attr Name="AutoDisabled" Val="1"/>
@@ -623,7 +615,6 @@
         <Step Id="synth_design">
           <Option Id="FlattenHierarchy">1</Option>
           <Option Id="FsmExtraction">0</Option>
-          <Option Id="Directive">0</Option>
           <Option Id="Directive">0</Option>
         </Step>
       </Strategy>
