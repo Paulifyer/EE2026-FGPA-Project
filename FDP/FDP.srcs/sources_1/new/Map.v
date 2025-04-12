@@ -48,7 +48,7 @@ module Map (
 
   // Bomb management
   reg  [41:0] bomb_indices;
-  reg  [ 1:0] bomb_en;
+  reg  [ 5:0] bomb_en;
   reg [3:0] bomb_countdown, bomb_countdown_enemy;
   wire dropBomb, dropBomb_enemy;
   reg [1:0] player_bombs_count = 3, enemy_bombs_count = 3;
@@ -255,13 +255,13 @@ module Map (
 //        bomb_en[0] <= 1;
 //        player_bombs_count <= player_bombs_count - 1;
 //      end
-        bomb_indices[20:0] <= bomb_tiles[20:0];
-        bomb_en[0] <= start_bomb[0];
+        bomb_indices[20:0] <= bomb_tiles;
+        bomb_en[3:0] <= start_bomb[3:0];
 
       // Handle enemy bomb placement
       if (dropBomb_enemy) begin
-        bomb_indices[13:7] <= bot_index;  // Enemy bomb index
-        bomb_en[1] <= 1;
+        bomb_indices[27:21] <= bot_index;  // Enemy bomb index
+        bomb_en[4] <= 1;
         enemy_bombs_count <= enemy_bombs_count - 1;
       end
       if (!empty & !busy) begin
