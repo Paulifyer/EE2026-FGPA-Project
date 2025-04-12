@@ -55,8 +55,11 @@ module Top_Student (
   assign breakable_tiles = 96'h000_0AA_004_6B0_012_200_094_000;
   assign wall_tiles         = 96'hFFF_945_C11_901_825_C81_829_FFF; // GAME MAP
   assign breakable_tiles    = 96'h000_0AA_004_6B0_012_200_094_000;
-//  assign powerup_tiles      = 96'h000_082_0F4_420_002_278_010_000; //TESTING
-  assign powerup_tiles      = 96'h000_082_004_420_002_200_010_000; // ACTUAL
+    assign powerup1_tiles      = 96'h000_00A_000_200_000_200_000_000; // BOMB UP: 4
+    assign powerup2_tiles      = 96'h000_000_000_200_002_000_000_000; // PUSH ABILITY: 2
+    assign powerup3_tiles      = 96'h000_000_000_020_010_000_000_000; // HEALTH UP: 2
+    assign powerup4_tiles      = 96'h000_000_004_080_000_000_000_000; // REDUCE TIMER: 2 
+    assign powerup5_tiles      = 96'h000_080_000_000_000_000_010_000; // BOMB RANGE: 2
 
   wire keyUP, keyDOWN, keyLEFT, keyRIGHT, keyBOMB, keySELECT;
   assign keyUP    = btnU | key_W;
@@ -78,6 +81,8 @@ module Top_Student (
       clkOneSec
   );
 
+    wire is_game_in_progress;
+    assign is_game_in_progress = (state == 4'b0010) & led[0];
   clock_generator_freq #(1000) c4 (
       clk,
       clk_1ms
@@ -106,6 +111,7 @@ module Top_Student (
 
   StateManager sM (
       keySELECT,
+        is_game_in_progress,
       clk,
       state
   );
@@ -148,15 +154,13 @@ module Top_Student (
       JB[6],
       JB[7]
   );
-
   Score_Tracker scoreTrack (
       clkOneSec,
       state,
-      key_ENTER,
+      is_game_in_progress,
       score,
       is_high_score
   );
-
   Map map (
       .clk(clk),
       .keyDOWN(keyDOWN),
@@ -170,10 +174,14 @@ module Top_Student (
       .pixel_index(pixel_index),
       .wall_tiles(wall_tiles),
       .JAout(JAout),
-      .bombs(led[15:12]),
+      .bombs(led[15:13]),
       .health(led[3:0]),
       .breakable_tiles(breakable_tiles),
-      .powerup_tiles(powerup_tiles),
+      .powerup1_tiles(powerup1_tiles),
+      .powerup2_tiles(powerup2_tiles),
+      .powerup3_tiles(powerup3_tiles),
+      .powerup4_tiles(powerup4_tiles),
+      .powerup5_tiles(powerup5_tiles),
       .pixel_data(oled_game_map)
   );
 

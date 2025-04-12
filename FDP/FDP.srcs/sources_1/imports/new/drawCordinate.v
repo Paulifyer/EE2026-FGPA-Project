@@ -7,9 +7,15 @@ module drawCordinate (
     input [95:0] wall_tiles,
     input [95:0] breakable_tiles,
     input [95:0] explosion_display,
-    input [95:0] powerup_tiles,
-    input [13:0] bomb_indices,
-    input [1:0] bomb_en,
+    input [2:0] user_direction,
+    input [2:0] bot_direction,
+    input [95:0] powerup1_tiles,
+    input [95:0] powerup2_tiles,
+    input [95:0] powerup3_tiles,
+    input [95:0] powerup4_tiles,
+    input [95:0] powerup5_tiles,
+    input [41:0] bomb_indices, 
+    input [5:0] bomb_en,
     input [1:0] sel, //sprite selection
     output [15:0] oledColour
 );
@@ -25,6 +31,10 @@ module drawCordinate (
   wire [15:0] botSquareColour;
   wire [15:0] bombSquareColour_1;
   wire [15:0] bombSquareColour_2;
+  wire [15:0] bombSquareColour_3;
+  wire [15:0] bombSquareColour_4;
+  wire [15:0] bombSquareColour_5;
+  wire [15:0] bombSquareColour_6;
   wire [15:0] objectColour;
 
   // Calculate current pixel coordinates
@@ -45,7 +55,11 @@ module drawCordinate (
 
   wire isWall = wall_tiles[tileIndex];
   wire isBreakable = breakable_tiles[tileIndex];
-  wire isPowerup = powerup_tiles[tileIndex];
+  wire isPowerup1 = powerup1_tiles[tileIndex];
+  wire isPowerup2 = powerup2_tiles[tileIndex];
+  wire isPowerup3 = powerup3_tiles[tileIndex];
+  wire isPowerup4 = powerup4_tiles[tileIndex];
+  wire isPowerup5 = powerup5_tiles[tileIndex];
   wire exploded = explosion_display[tileIndex];
   
   wire [5:0] tilePixelIndex = localY * TILE_WIDTH + localX;
@@ -53,55 +67,44 @@ module drawCordinate (
   // Determine active sprite pixel for wall and breakable using sprites data.
   wire wallActive = isWall && (WALL_SPRITE_DATA[tilePixelIndex]);
   wire brickActive = isBreakable && (BRICK_SPRITE_DATA[tilePixelIndex]);
-  wire powerupActive = isPowerup && (POWERUP_BOMBUP_SPRITE_DATA[tilePixelIndex]);
+  wire powerup1Active = isPowerup1 && (POWERUP_BOMBUP_SPRITE_DATA[tilePixelIndex]);
+  wire powerup2Active = isPowerup2 && (POWERUP_PUSH_SPRITE_DATA[tilePixelIndex]);
+  wire powerup3Active = isPowerup3 && (POWERUP_HEALTHUP_SPRITE_DATA[tilePixelIndex]);
+  wire powerup4Active = isPowerup4 && (POWERUP_REDUCETIMER_SPRITE_DATA[tilePixelIndex]);
+  wire powerup5Active = isPowerup5 && (POWERUP_BOMBRANGE_SPRITE_DATA[tilePixelIndex]);
+  wire explodeActive = exploded && (EXPLOSION_TRAIL_SPRITE_DATA[tilePixelIndex]);
   
   // Extract bomb indices directly from the input
   wire [6:0] bomb_index_1 = bomb_indices[6:0];
   wire [6:0] bomb_index_2 = bomb_indices[13:7];
+  wire [6:0] bomb_index_3 = bomb_indices[20:14];
+  wire [6:0] bomb_index_4 = bomb_indices[27:21];
+  wire [6:0] bomb_index_5 = bomb_indices[34:28];
+  wire [6:0] bomb_index_6 = bomb_indices[41:35];
   
-//  reg userFaceDirection;
-//  reg botFaceDirection;
-
   parameter BLACK_COLOUR = 16'h0000;  // Black
-
-//  // Assign direction of user and bot based on inputs: left and up faces left, right and down faces right
-//      // Process movement based on direction
-//      case (userFaceDirection)
-////        1: userFaceDirection <= CAT_SPRITE_LEFT_DATA;                  // UP
-////        2: userFaceDirection <= CAT_SPRITE_RIGHT_DATA;                 // RIGHT
-////        3: userFaceDirection <= CAT_SPRITE_RIGHT_DATA;                  // DOWN
-////        4: userFaceDirection <= CAT_SPRITE_LEFT_DATA;                  // LEFT
-//        default: begin
-////          userFaceDirection = CAT_SPRITE_LEFT_DATA;
-//        end
-//      endcase
-
-//    if (en) begin
-//      // Process movement based on direction
-//      case (direction)
-//        1: y_new = (y_cur > 0) ? y_cur - 1 : y_cur;                  // UP
-//        2: x_new = (x_cur < GRID_WIDTH - 1) ? x_cur + 1 : x_cur;     // RIGHT
-//        3: y_new = (y_cur < GRID_HEIGHT - 1) ? y_cur + 1 : y_cur;    // DOWN
-//        4: x_new = (x_cur > 0) ? x_cur - 1 : x_cur;                  // LEFT
-//        default: begin
-//          // No movement
-//        end
-//      endcase
-//    end
                         
   // Assign color based on tile type: bomb has highest priority.
   assign objectColour = ~wallActive & isWall ? WALL_COLOUR : 
                         ~brickActive & isBreakable ? BRICK_COLOUR : 
-                        ~powerupActive & isPowerup ? POWERUP_BACKGROUND_GREEN : 
-                         (exploded ? 16'h2945 : BLACK_COLOUR);
+                        ~powerup1Active & isPowerup1 ? POWERUP_BACKGROUND_GREEN : 
+                        ~powerup2Active & isPowerup2 ? POWERUP_BACKGROUND_GREEN : 
+                        ~powerup3Active & isPowerup3 ? POWERUP_BACKGROUND_GREEN : 
+                        ~powerup4Active & isPowerup4 ? POWERUP_BACKGROUND_GREEN : 
+                        ~powerup5Active & isPowerup5 ? POWERUP_BACKGROUND_GREEN : 
+                        ~explodeActive & exploded ? EXPLOSION_ORANGE : BLACK_COLOUR;
 
   //To let users choose which sprite to play with
-  reg [63:0] spriteData [2:0];
+  reg [63:0] spriteDataLeft [2:0];
+  reg [63:0] spriteDataRight [2:0];
   reg [15:0] spriteColour [2:0];
   initial begin
-          spriteData[0] = ORANGE_SPRITE_LEFT_DATA;
-          spriteData[1] = DINO_SPRITE_LEFT_DATA;
-          spriteData[2] = CAT_SPRITE_LEFT_DATA;
+          spriteDataLeft[0] = ORANGE_SPRITE_LEFT_DATA;
+          spriteDataLeft[1] = DINO_SPRITE_LEFT_DATA;
+          spriteDataLeft[2] = CAT_SPRITE_LEFT_DATA;
+          spriteDataRight[0] = ORANGE_SPRITE_RIGHT_DATA;
+          spriteDataRight[1] = DINO_SPRITE_RIGHT_DATA;
+          spriteDataRight[2] = CAT_SPRITE_RIGHT_DATA;
           spriteColour[0] = 16'hFE40;
           spriteColour[1] = DINO_COLOUR;
           spriteColour[2] = CAT_COLOUR;
@@ -111,7 +114,7 @@ module drawCordinate (
   drawSquare #(8) userSquare (
       .tile_index(user_index),
       .colour(spriteColour[sel]),
-      .squareData(spriteData[sel]),
+      .squareData((user_direction == 1 || user_direction == 4)? spriteDataLeft[sel] : spriteDataRight[sel]),
       .cordinateIndex(cordinateIndex),
       .oledColour(userSquareColour)
   );
@@ -119,14 +122,14 @@ module drawCordinate (
   drawSquare #(8) botSquare (
       .tile_index(bot_index),
       .colour(DINO_COLOUR),
-      .squareData(DINO_SPRITE_LEFT_DATA),
+      .squareData((bot_direction == 1 || bot_direction == 4)? DINO_SPRITE_LEFT_DATA : DINO_SPRITE_RIGHT_DATA),
       .cordinateIndex(cordinateIndex),
       .oledColour(botSquareColour)
   );
 
   drawSquare #(8) bombSquare_1 (
       .tile_index(bomb_index_1),
-      .colour(BOMB_GREY),
+      .colour(spriteColour[sel]),
       .squareData(BOMB_SPRITE_DATA),
       .cordinateIndex(cordinateIndex),
       .oledColour(bombSquareColour_1)
@@ -134,15 +137,51 @@ module drawCordinate (
 
   drawSquare #(8) bombSquare_2 (
       .tile_index(bomb_index_2),
-      .colour(BOMB_ORANGE),
+      .colour(BOMB_GREY),
       .squareData(BOMB_SPRITE_DATA),
       .cordinateIndex(cordinateIndex),
       .oledColour(bombSquareColour_2)
+  );
+
+  drawSquare #(8) bombSquare_3 (
+      .tile_index(bomb_index_3),
+      .colour(BOMB_GREY),
+      .squareData(BOMB_SPRITE_DATA),
+      .cordinateIndex(cordinateIndex),
+      .oledColour(bombSquareColour_3)
+  );
+
+  drawSquare #(8) bombSquare_4 (
+      .tile_index(bomb_index_4),
+      .colour(BOMB_ORANGE),
+      .squareData(BOMB_SPRITE_DATA),
+      .cordinateIndex(cordinateIndex),
+      .oledColour(bombSquareColour_4)
+  );
+
+  drawSquare #(8) bombSquare_5 (
+      .tile_index(bomb_index_5),
+      .colour(BOMB_GREY),
+      .squareData(BOMB_SPRITE_DATA),
+      .cordinateIndex(cordinateIndex),
+      .oledColour(bombSquareColour_5)
+  );
+
+  drawSquare #(8) bombSquare_6 (
+      .tile_index(bomb_index_6),
+      .colour(BOMB_ORANGE),
+      .squareData(BOMB_SPRITE_DATA),
+      .cordinateIndex(cordinateIndex),
+      .oledColour(bombSquareColour_6)
   );
 
   // Combine elements with priority: bot, user, then wall
   assign oledColour = botSquareColour | userSquareColour | 
                      (bomb_en[0] ? bombSquareColour_1 : BLACK_COLOUR) | 
                      (bomb_en[1] ? bombSquareColour_2 : BLACK_COLOUR) | 
+                     (bomb_en[2] ? bombSquareColour_3 : BLACK_COLOUR) | 
+                     (bomb_en[3] ? bombSquareColour_4 : BLACK_COLOUR) | 
+                     (bomb_en[4] ? bombSquareColour_5 : BLACK_COLOUR) | 
+                     (bomb_en[5] ? bombSquareColour_6 : BLACK_COLOUR) | 
                      objectColour;
 endmodule
