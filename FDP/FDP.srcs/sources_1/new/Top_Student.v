@@ -171,7 +171,7 @@ module Top_Student (
       .wall_tiles(wall_tiles),
       .JAout(JAout),
       .bombs(led[15:12]),
-      .led(led[3:0]),
+      .health(led[3:0]),
       .breakable_tiles(breakable_tiles),
       .powerup_tiles(powerup_tiles),
       .pixel_data(oled_game_map)
@@ -184,6 +184,7 @@ module Top_Student (
       .score(score),
       .is_high_score(is_high_score),
       .pixel_index(pixel_index),
+      .health(led[3:0]),
       .bombs(led[15:12]),
       .hsync(hsync),
       .vsync(vsync),

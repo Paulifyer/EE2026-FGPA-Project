@@ -7,6 +7,7 @@ module OLED_to_VGA (
     input is_high_score,
     input [12:0] pixel_index,
     input [3:0] bombs,  // 4 bits representing up to 4 bombs (1111 = 4 bombs, 0111 = 3 bombs, etc.)
+    input [3:0] health,  // 4 bits representing up to 4 health points (1111 = 4 health, 0111 = 3 health, etc.)
     output hsync,
     output vsync,
     output reg [11:0] rgb
@@ -122,8 +123,6 @@ module OLED_to_VGA (
   parameter HEALTH_HOFFSET = 125;
   wire health_pixel_active;
 
-  wire [3:0] player_health = 4'b0111;
-
   // Instantiate the score module with custom offsets:
   ScoreDisplay #(
       .SCORE_VOFFSET(SCORE_VOFFSET),
@@ -149,7 +148,7 @@ module OLED_to_VGA (
       .clk(clk),
       .x_in(x),
       .y_in(y),
-      .count(bombs),
+      .count({bombs[0], bombs[1], bombs[2], bombs[3]}),  // Reverse the bit order of bombs
       .sprite_data(BOMB_SPRITE_DATA),  // Pass the bomb sprite data to the display module
       .pixel_on(bomb_pixel_active)
   );
@@ -162,7 +161,7 @@ module OLED_to_VGA (
       .clk(clk),
       .x_in(x),
       .y_in(y),
-      .count(player_health),
+      .count(health),
       .sprite_data(HEART_SPRITE_DATA),
       .pixel_on(health_pixel_active)
   );

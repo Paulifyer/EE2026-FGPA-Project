@@ -8,15 +8,15 @@ module Map (
     keyRIGHT,
     keyBOMB,
     input [3:0] state,
-    input [1:0] sel, //to pick sprites for player
-    input JAin, //for UARTRx
+    input [1:0] sel,  //to pick sprites for player
+    input JAin,  //for UARTRx
     input [12:0] pixel_index,
     input [95:0] wall_tiles,
-    output JAout, //for UARTTx
-    output [3:0] led,
+    output JAout,  //for UARTTx
     input [95:0] breakable_tiles,
     input [95:0] powerup_tiles,
     output [3:0] bombs,
+    output [3:0] health,
     output [15:0] pixel_data
 );
 
@@ -39,14 +39,14 @@ module Map (
   // Player and enemy position registers as indices
   reg [6:0] user_index, bot_index;
   wire [6:0] new_user_index, new_bot_index;
-  
+
   // Movement signals
-  reg  [2:0] user_move;  // 1: up, 2: right, 3: down, 4: left
-  wire [2:0] bot_move_wire;  // Bot movement wire from AI
+  reg  [ 2:0] user_move;  // 1: up, 2: right, 3: down, 4: left
+  wire [ 2:0] bot_move_wire;  // Bot movement wire from AI
 
   // Bomb management
-  reg [13:0] bomb_indices;
-  reg [1:0] bomb_en;
+  reg  [13:0] bomb_indices;
+  reg  [ 1:0] bomb_en;
   reg [3:0] bomb_countdown, bomb_countdown_enemy;
   wire dropBomb, dropBomb_enemy;
   reg [2:0] player_bombs_count = 4, enemy_bombs_count = 4;
@@ -64,8 +64,8 @@ module Map (
 
   // Random number generation
   reg [15:0] random_seed;
-  
-  wire en; //enable wire
+
+  wire en;  //enable wire
 
   // Clock Divider for game timing
   slow_clock c1 (
@@ -81,7 +81,7 @@ module Map (
       .btn(keyBOMB),
       .btn_state(keyBOMB_debounced)
   );
-  
+
   assign en = (state == 2);
 
   // Button edge detection logic
@@ -123,36 +123,48 @@ module Map (
       .en(en),
       .new_index(new_bot_index)
   );
-  
+
   //UART TRANSMISSION
-    reg tx_start;
-    reg rx_receiving = 0;
-    reg [15:0] data;
-    wire busy;
-    UartTx send (clk, tx_start, rx_receiving, data, JAout, busy);
-    
+  reg tx_start;
+  reg rx_receiving = 0;
+  reg [15:0] data;
+  wire busy;
+  UartTx send (
+      clk,
+      tx_start,
+      rx_receiving,
+      data,
+      JAout,
+      busy
+  );
+
   //UART RECEIVE
-    wire valid, isReceiving;
-    wire [2:0] packetType;
-    wire [12:0] dataReceived;
-    UartRx receive (
-        .rx(JAin),
-        .clk(clk),
-        .packetType(packetType),
-        .data(dataReceived),
-        .valid(valid),
-        .isReceiving(isReceiving)
-    );
-    
-    //Transmission Buffer (FIFO)
-    reg readEn, writeEn; //enables read and write resp.
-    reg [15:0] writeData; //data written into the buffer
-    wire empty, full; //check if empty or full
-    wire [15:0] readData; //data written from the buffer
-    FIFOReg txBuffer (readEn, writeEn, clk, writeData, empty, full, readData);
-   
-    
-    
+  wire valid, isReceiving;
+  wire [ 2:0] packetType;
+  wire [12:0] dataReceived;
+  UartRx receive (
+      .rx(JAin),
+      .clk(clk),
+      .packetType(packetType),
+      .data(dataReceived),
+      .valid(valid),
+      .isReceiving(isReceiving)
+  );
+
+  //Transmission Buffer (FIFO)
+  reg readEn, writeEn;  //enables read and write resp.
+  reg [15:0] writeData;  //data written into the buffer
+  wire empty, full;  //check if empty or full
+  wire [15:0] readData;  //data written from the buffer
+  FIFOReg txBuffer (
+      readEn,
+      writeEn,
+      clk,
+      writeData,
+      empty,
+      full,
+      readData
+  );
 
   // Enemy AI movement controller
   enemy_movement enemy_move (
@@ -208,14 +220,14 @@ module Map (
 
       // Handle player bomb placement
       if (dropBomb) begin
-        bomb_indices[6:0] <= user_index; // Player bomb index
+        bomb_indices[6:0] <= user_index;  // Player bomb index
         bomb_en[0] <= 1;
         player_bombs_count <= player_bombs_count - 1;
       end
 
       // Handle enemy bomb placement
       if (dropBomb_enemy) begin
-        bomb_indices[13:7] <= bot_index; // Enemy bomb index
+        bomb_indices[13:7] <= bot_index;  // Enemy bomb index
         bomb_en[1] <= 1;
         enemy_bombs_count <= enemy_bombs_count - 1;
       end
@@ -224,8 +236,8 @@ module Map (
         data = readData;
       end else begin
         readEn <= 1'b0;
-      end  
-      
+      end
+
       // Reset bomb status when countdown reaches zero
       if (bomb_countdown == 0) bomb_en[0] <= 0;
       if (bomb_countdown_enemy == 0) bomb_en[1] <= 0;
@@ -242,25 +254,27 @@ module Map (
     random_seed <= {
       random_seed[14:0], random_seed[15] ^ random_seed[13] ^ random_seed[12] ^ random_seed[10]
     };
-    
+
     bomb_countdown <= bomb_en[0] ? bomb_countdown - 1 : 10;
     bomb_countdown_enemy <= bomb_en[1] ? bomb_countdown_enemy - 1 : 10;
-    
+
     // Checks if new location will be updated and FIFO is full, then starts a write operation into FIFO
     if (user_index != new_user_index & !full) begin
-        writeData <= {3'b000, 3'b000, new_user_index};
-        writeEn <= 1'b1;
+      writeData <= {3'b000, 3'b000, new_user_index};
+      writeEn   <= 1'b1;
     end else writeEn <= 1'b0;
     // Update player positions using indices
     user_index <= en ? new_user_index : (GREEN_Y_TILE * GRID_WIDTH + GREEN_X_TILE);
-    bot_index <= en ? new_bot_index : (YELLOW_Y_TILE * GRID_WIDTH + YELLOW_X_TILE);
+    bot_index  <= en ? new_bot_index : (YELLOW_Y_TILE * GRID_WIDTH + YELLOW_X_TILE);
   end
 
   // Bomb count indicator for LEDs
   assign bombs = player_bombs_count == 4 ? 4'b1111 : 
-                 player_bombs_count == 3 ? 4'b0111 : 
-                 player_bombs_count == 2 ? 4'b0011 : 
-                 player_bombs_count == 1 ? 4'b0001 : 
+                 player_bombs_count == 3 ? 4'b1110 : 
+                 player_bombs_count == 2 ? 4'b1100 : 
+                 player_bombs_count == 1 ? 4'b1000 : 
                  4'b0000;
+
+  assign health = 4'b0111;
 
 endmodule
