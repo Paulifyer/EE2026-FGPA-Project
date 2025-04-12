@@ -6,6 +6,7 @@ module drawCordinate (
     input [6:0] bot_index,
     input [95:0] wall_tiles,
     input [95:0] breakable_tiles,
+    input [95:0] explosion_display,
     input [95:0] powerup_tiles,
     input [2:0] user_direction,
     input [2:0] bot_direction,
@@ -47,6 +48,7 @@ module drawCordinate (
   wire isWall = wall_tiles[tileIndex];
   wire isBreakable = breakable_tiles[tileIndex];
   wire isPowerup = powerup_tiles[tileIndex];
+  wire exploded = explosion_display[tileIndex];
   
   wire [5:0] tilePixelIndex = localY * TILE_WIDTH + localX;
   
@@ -65,7 +67,7 @@ module drawCordinate (
   assign objectColour = ~wallActive & isWall ? WALL_COLOUR : 
                         ~brickActive & isBreakable ? BRICK_COLOUR : 
                         ~powerupActive & isPowerup ? POWERUP_BACKGROUND_GREEN : 
-                        BLACK_COLOUR;
+                         (exploded ? 16'h2945 : BLACK_COLOUR);
 
   //To let users choose which sprite to play with
   reg [63:0] spriteDataLeft [2:0];
