@@ -5,8 +5,8 @@ module enemy_movement (
     input en,
     input [6:0] bot_index,
     input [6:0] user_index,
-    input [13:0] bomb_indices,
-    input [1:0] bomb_en,
+    input [41:0] bomb_indices,  // Updated to handle up to 6 bombs
+    input [5:0] bomb_en,        // Updated to handle up to 6 bombs
     input [95:0] wall_tiles,
     input [95:0] breakable_tiles,
     input [95:0] powerup_tiles,
@@ -50,23 +50,41 @@ module enemy_movement (
   wire [3:0] userY = user_index / GRID_WIDTH;
 
   // Extract bomb X/Y coordinates from indices for easier comparison
-  wire [3:0] bomb_X[1:0];
-  wire [3:0] bomb_Y[1:0];
+  wire [3:0] bomb_X[5:0];  // Increased to handle up to 6 bombs
+  wire [3:0] bomb_Y[5:0];  // Increased to handle up to 6 bombs
 
+  // Map all 6 potential bomb positions (3 player bombs, 3 enemy bombs)
   assign bomb_X[0] = bomb_indices[6:0] % GRID_WIDTH;
   assign bomb_Y[0] = bomb_indices[6:0] / GRID_WIDTH;
   assign bomb_X[1] = bomb_indices[13:7] % GRID_WIDTH;
   assign bomb_Y[1] = bomb_indices[13:7] / GRID_WIDTH;
+  assign bomb_X[2] = bomb_indices[20:14] % GRID_WIDTH;
+  assign bomb_Y[2] = bomb_indices[20:14] / GRID_WIDTH;
+  assign bomb_X[3] = bomb_indices[27:21] % GRID_WIDTH;
+  assign bomb_Y[3] = bomb_indices[27:21] / GRID_WIDTH;
+  assign bomb_X[4] = bomb_indices[34:28] % GRID_WIDTH;
+  assign bomb_Y[4] = bomb_indices[34:28] / GRID_WIDTH;
+  assign bomb_X[5] = bomb_indices[41:35] % GRID_WIDTH;
+  assign bomb_Y[5] = bomb_indices[41:35] / GRID_WIDTH;
 
   // Distance calculation to player
   wire [3:0] dx_player = (botX > userX) ? (botX - userX) : (userX - botX);
   wire [3:0] dy_player = (botY > userY) ? (botY - userY) : (userY - botY);
   wire [3:0] dist_to_player = dx_player + dy_player;
 
-  // Bomb danger detection using extracted X/Y
-  wire in_bomb1_danger = bomb_en[0] ? (botX == bomb_X[0] || botY == bomb_Y[0]) : 0;
-  wire in_bomb2_danger = bomb_en[1] ? (botX == bomb_X[1] || botY == bomb_Y[1]) : 0;
-  wire in_bomb_danger = in_bomb1_danger | in_bomb2_danger;
+  // Bomb danger detection - check if bot is in line with any active bomb
+  wire [5:0] bomb_danger;  // One bit per bomb
+  
+  // Check each bomb to see if the bot is in its blast line
+  genvar i;
+  generate
+    for (i = 0; i < 6; i = i + 1) begin : bomb_check
+      assign bomb_danger[i] = bomb_en[i] && ((botX == bomb_X[i]) || (botY == bomb_Y[i]));
+    end
+  endgenerate
+  
+  // Bot is in danger if any bomb danger bit is set
+  wire in_bomb_danger = |bomb_danger;
 
   // Collision detection function
   function is_collision;
@@ -80,11 +98,16 @@ module enemy_movement (
 
   // Helper function to detect if position is in bomb line
   function is_in_bomb_line;
-    input [3:0] test_x, test_y;
-    begin
-      is_in_bomb_line = (bomb_en[0] && (test_x == bomb_X[0] || test_y == bomb_Y[0])) || 
-                         (bomb_en[1] && (test_x == bomb_X[1] || test_y == bomb_Y[1]));
-    end
+      input [3:0] test_x, test_y;
+      integer i;
+      begin
+        is_in_bomb_line = 0; // Initialize to false
+        for (i = 0; i < 6; i = i + 1) begin
+          if (bomb_en[i] && ((test_x == bomb_X[i]) || (test_y == bomb_Y[i]))) begin
+            is_in_bomb_line = 1; // Set to true if any bomb matches
+          end
+        end
+      end
   endfunction
 
     function is_clear_path;

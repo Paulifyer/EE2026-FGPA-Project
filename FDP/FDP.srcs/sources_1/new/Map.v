@@ -67,15 +67,33 @@ module Map (
   // Random number generation
   reg [15:0] random_seed;
 
-    reg [95:0] after_powerup_tiles;
-    wire [20:0] bomb_tiles;
-    wire [95:0] after_break_tiles, explosion_display;
-    reg [2:0] bomb_limit = 1, bomb_range = 1;
-    reg [13:0] bomb_time = 10000;
-    reg [3:0] player_health = 4'b1111;
-    wire [5:0] start_bomb;
-    reg push_bomb_ability = 0;
-    bomb boom (clk,keyBOMB_posedge,en,push_bomb_ability,wall_tiles,breakable_tiles,bomb_indices[41:21],user_index,player_health,bomb_limit,bomb_range,bomb_time,after_break_tiles,explosion_display,bomb_tiles,health,start_bomb);
+  reg [95:0] after_powerup_tiles;
+  wire [20:0] bomb_tiles;
+  wire [95:0] after_break_tiles, explosion_display;
+  reg [2:0] bomb_limit = 1, bomb_range = 1;
+  reg [13:0] bomb_time = 10000;
+  reg [3:0] player_health = 4'b1111;
+  wire [5:0] start_bomb;
+  reg push_bomb_ability = 0;
+  bomb boom (
+      clk,
+      keyBOMB_posedge,
+      en,
+      push_bomb_ability,
+      wall_tiles,
+      breakable_tiles,
+      bomb_indices[41:21],
+      user_index,
+      player_health,
+      bomb_limit,
+      bomb_range,
+      bomb_time,
+      after_break_tiles,
+      explosion_display,
+      bomb_tiles,
+      health,
+      start_bomb
+  );
 
   // Clock Divider for game timing
   slow_clock c1 (
@@ -218,7 +236,7 @@ module Map (
     user_move = 0;
     bomb_countdown = 0;
     bomb_countdown_enemy = 0;
-    bomb_en = 2'b00;
+    bomb_en = 6'b000000;
     bomb_indices = 0;
     random_seed = 16'hACE1;
     module_was_enabled = 0;
@@ -250,18 +268,29 @@ module Map (
       end
 
       // Handle player bomb placement
-//      if (dropBomb) begin
-//        bomb_indices[6:0] <= user_index;  // Player bomb index
-//        bomb_en[0] <= 1;
-//        player_bombs_count <= player_bombs_count - 1;
-//      end
-        bomb_indices[20:0] <= bomb_tiles;
-        bomb_en[3:0] <= start_bomb[3:0];
+      //      if (dropBomb) begin
+      //        bomb_indices[6:0] <= user_index;  // Player bomb index
+      //        bomb_en[0] <= 1;
+      //        player_bombs_count <= player_bombs_count - 1;
+      //      end
+      bomb_indices[20:0] <= bomb_tiles;
+      bomb_en[3:0] <= start_bomb[3:0];
 
       // Handle enemy bomb placement
       if (dropBomb_enemy) begin
-        bomb_indices[27:21] <= bot_index;  // Enemy bomb index
-        bomb_en[4] <= 1;
+        // Set bomb at the correct index position based on enemy_bombs_count
+        case (enemy_bombs_count)
+          3: begin bomb_indices[27:21] <= bot_index;  
+              bomb_en[1] <= 1;
+            end
+          2: begin bomb_indices[34:28] <= bot_index;  
+              bomb_en[2] <= 1;
+            end
+          1: begin bomb_indices[41:35] <= bot_index;  
+              bomb_en[3] <= 1;
+            end
+          default: /* Do nothing if no bombs left */;
+        endcase
         enemy_bombs_count <= enemy_bombs_count - 1;
       end
       if (!empty & !busy) begin
@@ -274,24 +303,21 @@ module Map (
       // Reset bomb status when countdown reaches zero
       if (bomb_countdown == 0) bomb_en[0] <= 0;
       if (bomb_countdown_enemy == 0) bomb_en[1] <= 0;
-      
-        // Player get push powerup
-        if (after_powerup_tiles[user_index] == 1) begin
-            bomb_limit <= bomb_limit + (bomb_limit < 3);
-            after_powerup_tiles[user_index] <= 0;
-        end
-        else if (after_powerup_tiles[user_index] == 1) begin
-            bomb_range <= bomb_range + (bomb_limit < 3);
-            after_powerup_tiles[user_index] <= 0;
-        end
-        else if (after_powerup_tiles[user_index] == 1) begin
-            bomb_time <= bomb_time - 1000*(bomb_time > 1000);
-            after_powerup_tiles[user_index] <= 0;
-        end
-        else if (after_powerup_tiles[user_index] == 1) begin
-            player_health <= (player_health << 1) + 1;
-            after_powerup_tiles[user_index] <= 0;
-        end
+
+      // Player get push powerup
+      if (after_powerup_tiles[user_index] == 1) begin
+        bomb_limit <= bomb_limit + (bomb_limit < 3);
+        after_powerup_tiles[user_index] <= 0;
+      end else if (after_powerup_tiles[user_index] == 1) begin
+        bomb_range <= bomb_range + (bomb_limit < 3);
+        after_powerup_tiles[user_index] <= 0;
+      end else if (after_powerup_tiles[user_index] == 1) begin
+        bomb_time <= bomb_time - 1000 * (bomb_time > 1000);
+        after_powerup_tiles[user_index] <= 0;
+      end else if (after_powerup_tiles[user_index] == 1) begin
+        player_health <= (player_health << 1) + 1;
+        after_powerup_tiles[user_index] <= 0;
+      end
     end else begin
       // Reset the enabled state when the module is disabled
       module_was_enabled <= 0;
@@ -323,6 +349,6 @@ module Map (
   // Bomb count indicator for LEDs
   assign bombs = (((3'b111 << start_bomb[2]) << start_bomb[1]) << start_bomb[0]) << (3-bomb_limit);
 
-//  assign health = 4'b0111;
+  //  assign health = 4'b0111;
 
 endmodule
