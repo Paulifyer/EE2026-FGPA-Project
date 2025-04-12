@@ -207,7 +207,7 @@ module Map (
 
   // Input processing and bomb management (fast clock domain)
   always @(posedge clk) begin
-    if (ready == 1'b0 && sw[0]) begin
+    if (ready == 1'b0 && sw[0] && state == 3'b1) begin
         case (sw) 
             3'b011: begin //if master
                 if (!busy) begin //starts sending a master packet
@@ -217,6 +217,7 @@ module Map (
                 if (valid && ({packetType, dataReceived} == 16'b1110101010101010)) begin //waits for an acknowledgement packet
                     tx_start <= 0; //resets tx_start
                     ready <= 1; //sets Master to ready
+                    
                 end
             end 
             3'b101: begin //if slave
@@ -228,6 +229,8 @@ module Map (
                 end else begin
                     tx_start <= 0; //resets tx_start 
                     ready <= 1; //sets Slave to ready
+                    user_index = YELLOW_Y_TILE * GRID_WIDTH + YELLOW_X_TILE;
+                    bot_index = GREEN_Y_TILE * GRID_WIDTH + GREEN_X_TILE;
                 end
             end
         endcase
