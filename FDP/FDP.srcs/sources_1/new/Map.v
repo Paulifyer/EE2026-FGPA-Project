@@ -15,9 +15,11 @@ module Map (
     output JAout,  //for UARTTx
     input [95:0] breakable_tiles,
     input [95:0] powerup_tiles,
-    output [3:0] bombs,
+    output [2:0] bombs,
     output [3:0] health,
-    output [15:0] pixel_data
+    output is_game_in_progress,
+    output [15:0] pixel_data,
+    output en
 );
 
   // Parameters
@@ -49,7 +51,7 @@ module Map (
   reg  [ 1:0] bomb_en;
   reg [3:0] bomb_countdown, bomb_countdown_enemy;
   wire dropBomb, dropBomb_enemy;
-  reg [2:0] player_bombs_count = 4, enemy_bombs_count = 4;
+  reg [1:0] player_bombs_count = 3, enemy_bombs_count = 3;
 
   // Button management
   wire keyBOMB_debounced;
@@ -65,17 +67,34 @@ module Map (
   // Random number generation
   reg [15:0] random_seed;
 
-  wire en;  //enable wire
+  reg [95:0] after_powerup_tiles;
+  wire [13:0] bomb_tiles;
+  wire [95:0] after_break_tiles, explosion_display;
+  reg [2:0] bomb_limit = 1, bomb_range = 2;
+  reg [13:0] bomb_time = 10000;
+  reg [3:0] player_health = 4'b1111;
+  wire [3:0] start_bomb;
+  reg push_bomb_ability = 0;
 
-    reg [95:0] after_powerup_tiles;
-    wire [13:0] bomb_tiles;
-    wire [95:0] after_break_tiles, explosion_display;
-    reg [2:0] bomb_limit = 1, bomb_range = 2;
-    reg [13:0] bomb_time = 10000;
-    reg [3:0] player_health = 4'b1111;
-    wire [3:0] start_bomb;
-    reg push_bomb_ability = 0;
-    bomb boom (clk,keyBOMB_posedge,en,push_bomb_ability,wall_tiles,breakable_tiles,bomb_indices[13:7],user_index,player_health,bomb_limit,bomb_range,bomb_time,after_break_tiles,explosion_display,bomb_tiles,health,start_bomb);
+  bomb boom (
+      clk,
+      keyBOMB_posedge,
+      en,
+      push_bomb_ability,
+      wall_tiles,
+      breakable_tiles,
+      bomb_indices[13:7],
+      user_index,
+      player_health,
+      bomb_limit,
+      bomb_range,
+      bomb_time,
+      after_break_tiles,
+      explosion_display,
+      bomb_tiles,
+      health,
+      start_bomb
+  );
 
   // Clock Divider for game timing
   slow_clock c1 (
@@ -91,7 +110,7 @@ module Map (
       .btn(keyBOMB),
       .btn_state(keyBOMB_debounced)
   );
-  
+
   reg [1:0] state_counter = 0;
   reg en_delayed = 0;
 
@@ -106,11 +125,11 @@ module Map (
       en_delayed <= 0;
       state_counter <= 0;
     end else begin
-      en_delayed <= en_delayed; // Maintain the current state of en_delayed
+      en_delayed <= en_delayed;  // Maintain the current state of en_delayed
     end
   end
 
-  assign en = en_delayed;
+  assign en = en_delayed & health[0] & (state == 2);
 
   // Button edge detection logic
   assign keyBOMB_posedge = keyBOMB_debounced & ~keyBOMB_prev;
@@ -228,8 +247,8 @@ module Map (
   end
 
   // Bomb placement logic
-  assign dropBomb = (en && player_bombs_count != 0) ? keyBOMB_posedge : 0;
-  assign dropBomb_enemy = (en && enemy_bombs_count != 0) ? keyBOMB_enemy_posedge : 0;
+  assign dropBomb = (en & player_bombs_count != 0) ? keyBOMB_posedge : 0;
+  assign dropBomb_enemy = (en & enemy_bombs_count != 0) ? keyBOMB_enemy_posedge : 0;
 
   // Input processing and bomb management (fast clock domain)
   always @(posedge clk) begin
@@ -244,19 +263,19 @@ module Map (
       if (!module_was_enabled) begin
         module_was_enabled <= 1;
         first_enable_keyBOMB_pressed <= keyBOMB_debounced;
-      end else if (first_enable_keyBOMB_pressed && !keyBOMB_debounced) begin
+      end else if (first_enable_keyBOMB_pressed & !keyBOMB_debounced) begin
         // Reset the flag once the initial button press is released
         first_enable_keyBOMB_pressed <= 0;
       end
 
       // Handle player bomb placement
-//      if (dropBomb) begin
-//        bomb_indices[6:0] <= user_index;  // Player bomb index
-//        bomb_en[0] <= 1;
-//        player_bombs_count <= player_bombs_count - 1;
-//      end
-        bomb_indices[6:0] <= bomb_tiles[6:0];
-        bomb_en[0] <= start_bomb[0];
+      //      if (dropBomb) begin
+      //        bomb_indices[6:0] <= user_index;  // Player bomb index
+      //        bomb_en[0] <= 1;
+      //        player_bombs_count <= player_bombs_count - 1;
+      //      end
+      bomb_indices[6:0] <= bomb_tiles[6:0];
+      bomb_en[0] <= start_bomb[0];
 
       // Handle enemy bomb placement
       if (dropBomb_enemy) begin
@@ -264,7 +283,7 @@ module Map (
         bomb_en[1] <= 1;
         enemy_bombs_count <= enemy_bombs_count - 1;
       end
-      if (!empty && !busy) begin
+      if (!empty & !busy) begin
         readEn <= 1'b1;
         data = readData;
       end else begin
@@ -274,13 +293,13 @@ module Map (
       // Reset bomb status when countdown reaches zero
       if (bomb_countdown == 0) bomb_en[0] <= 0;
       if (bomb_countdown_enemy == 0) bomb_en[1] <= 0;
-      
-        // Player get push powerup
-        if (after_powerup_tiles[user_index] == 1) begin
-            push_bomb_ability <= 1;
-            after_powerup_tiles[user_index] <= 0;
-        end
-        
+
+      // Player get push powerup
+      if (after_powerup_tiles[user_index] == 1) begin
+        push_bomb_ability <= 1;
+        after_powerup_tiles[user_index] <= 0;
+      end
+
     end else begin
       // Reset the enabled state when the module is disabled
       module_was_enabled <= 0;
@@ -310,12 +329,8 @@ module Map (
   end
 
   // Bomb count indicator for LEDs
-  assign bombs = player_bombs_count == 4 ? 4'b1111 : 
-                 player_bombs_count == 3 ? 4'b1110 : 
-                 player_bombs_count == 2 ? 4'b1100 : 
-                 player_bombs_count == 1 ? 4'b1000 : 
-                 4'b0000;
-
-//  assign health = 4'b0111;
-
+  assign bombs = player_bombs_count == 3 ? 3'b111 : 
+                 player_bombs_count == 2 ? 3'b110 : 
+                 player_bombs_count == 1 ? 3'b100 : 
+                 4'b000;
 endmodule

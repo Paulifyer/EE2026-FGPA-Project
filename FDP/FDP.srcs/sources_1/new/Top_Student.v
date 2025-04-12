@@ -106,6 +106,7 @@ module Top_Student (
 
   StateManager sM (
       keySELECT,
+        is_game_in_progress,
       clk,
       state
   );
@@ -148,11 +149,11 @@ module Top_Student (
       JB[6],
       JB[7]
   );
-
+    wire is_game_in_progress;
   Score_Tracker scoreTrack (
       clkOneSec,
       state,
-      key_ENTER,
+      is_game_in_progress,
       score,
       is_high_score
   );
@@ -170,8 +171,9 @@ module Top_Student (
       .pixel_index(pixel_index),
       .wall_tiles(wall_tiles),
       .JAout(JAout),
-      .bombs(led[15:12]),
+      .bombs(led[15:13]),
       .health(led[3:0]),
+      .en(is_game_in_progress),
       .breakable_tiles(breakable_tiles),
       .powerup_tiles(powerup_tiles),
       .pixel_data(oled_game_map)
