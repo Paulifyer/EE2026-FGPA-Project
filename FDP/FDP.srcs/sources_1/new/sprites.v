@@ -133,7 +133,7 @@ package sprites;
     8'b00111000
   };
   parameter BOMB_GREY = 16'ha554;
-  parameter BOMB_ORANGE = 16'ha554;
+  parameter BOMB_ORANGE = 16'hfa20;
   
   // Tombstone sprite data
   parameter TOMBSTONE_SPRITE_DATA = {  // REPLACES CHARACTERS WHEN THEY DIE

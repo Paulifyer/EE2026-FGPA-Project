@@ -27,7 +27,7 @@ module SpriteMenu(
     input btnR,
     input clk,
     output [15:0] oled_data,
-    output reg [1:0] sel = 2'b0
+    output reg [1:0] sel = 2'b00
     );
     
     import sprites::*;
