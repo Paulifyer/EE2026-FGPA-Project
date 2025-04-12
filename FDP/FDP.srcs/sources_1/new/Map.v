@@ -77,8 +77,7 @@ module Map (
     reg [3:0] player_health = 4'b1111;
     wire [5:0] start_bomb;
     reg push_bomb_ability = 0;
-    wire bombExploded;
-    bomb boom (clk,keyBOMB_posedge,en,push_bomb_ability,wall_tiles,breakable_tiles,bomb_indices[20:0],user_index,player_health,bomb_limit,bomb_range,bomb_time,after_break_tiles,explosion_display,bomb_tiles,health,start_bomb);
+    bomb boom (clk,keyBOMB_posedge,en,push_bomb_ability,wall_tiles,breakable_tiles,bomb_indices[20:0],user_index,player_health,bomb_limit,bomb_range,bomb_time,after_break_tiles,explosion_display,bomb_tiles,health,start_bomb, bombExploded);
 
   // Clock Divider for game timing
   slow_clock c1 (
