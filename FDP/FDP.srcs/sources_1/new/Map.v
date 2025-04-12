@@ -52,9 +52,9 @@ module Map (
   reg [2:0] player_bombs_count = 4, enemy_bombs_count = 4;
 
   // Button management
-
   wire keyBOMB_debounced;
-  reg keyBOMB_prev, keyBOMB_enemy_prev;
+  reg  keyBOMB_prev;
+  reg  keyBOMB_enemy_prev;
   wire keyBOMB_posedge, keyBOMB_enemy_posedge;
   wire keyBOMB_enemy;
 
@@ -87,12 +87,30 @@ module Map (
   // Button Debounce and Edge Detection
   switch_debounce debounce_keyBOMB (
       .clk(clk),
-      .debound_count(50000),
+      .debound_count(50_000),
       .btn(keyBOMB),
       .btn_state(keyBOMB_debounced)
   );
+  
+  reg [1:0] state_counter = 0;
+  reg en_delayed = 0;
 
-  assign en = (state == 2);
+  always @(posedge clk1p0) begin
+    if (state == 2 & ~en_delayed) begin
+      state_counter <= state_counter + 1;
+      if (state_counter == 2) begin
+        en_delayed <= 1;
+        state_counter <= 0;
+      end
+    end else if (state == 0) begin
+      en_delayed <= 0;
+      state_counter <= 0;
+    end else begin
+      en_delayed <= en_delayed; // Maintain the current state of en_delayed
+    end
+  end
+
+  assign en = en_delayed;
 
   // Button edge detection logic
   assign keyBOMB_posedge = keyBOMB_debounced & ~keyBOMB_prev;
@@ -205,10 +223,12 @@ module Map (
     random_seed = 16'hACE1;
     module_was_enabled = 0;
     first_enable_keyBOMB_pressed = 0;
+    keyBOMB_prev = 0;
+    keyBOMB_enemy_prev = 0;
   end
 
   // Bomb placement logic
-//  assign dropBomb = (en && player_bombs_count != 0 && module_was_enabled && !first_enable_keyBOMB_pressed) ? keyBOMB_posedge : 0;
+  assign dropBomb = (en && player_bombs_count != 0) ? keyBOMB_posedge : 0;
   assign dropBomb_enemy = (en && enemy_bombs_count != 0) ? keyBOMB_enemy_posedge : 0;
 
   // Input processing and bomb management (fast clock domain)
