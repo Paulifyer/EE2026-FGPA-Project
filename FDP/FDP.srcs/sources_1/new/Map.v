@@ -14,7 +14,11 @@ module Map (
     input [95:0] wall_tiles,
     output JAout,  //for UARTTx
     input [95:0] breakable_tiles,
-    input [95:0] powerup_tiles,
+    input [95:0] powerup1_tiles,
+    input [95:0] powerup2_tiles,
+    input [95:0] powerup3_tiles,
+    input [95:0] powerup4_tiles,
+    input [95:0] powerup5_tiles,
     output [2:0] bombs,
     output [3:0] health,
     output [15:0] pixel_data
@@ -67,7 +71,11 @@ module Map (
   // Random number generation
   reg [15:0] random_seed;
 
-    reg [95:0] after_powerup_tiles;
+    reg [95:0] after_powerup1_tiles;
+    reg [95:0] after_powerup2_tiles;
+    reg [95:0] after_powerup3_tiles;
+    reg [95:0] after_powerup4_tiles;
+    reg [95:0] after_powerup5_tiles;
     wire [20:0] bomb_tiles;
     wire [95:0] after_break_tiles, explosion_display;
     reg [2:0] bomb_limit = 1, bomb_range = 1;
@@ -125,7 +133,11 @@ module Map (
       .wall_tiles(wall_tiles),
       .breakable_tiles(after_break_tiles),
       .explosion_display(explosion_display),
-      .powerup_tiles(after_powerup_tiles),
+      .powerup_tiles(powerup1_tiles),
+      .powerup_tiles(powerup2_tiles),
+      .powerup_tiles(powerup3_tiles),
+      .powerup_tiles(powerup4_tiles),
+      .powerup_tiles(powerup5_tiles),
       .bomb_indices(bomb_indices),
       .bomb_en(bomb_en),
       .sel(sel),
@@ -137,7 +149,6 @@ module Map (
       .cur_index(user_index),
       .wall_tiles(wall_tiles),
       .breakable_tiles(after_break_tiles),
-      .powerup_tiles(powerup_tiles),
       .direction(user_move),
       .en(en),
       .new_index(new_user_index)
@@ -148,7 +159,6 @@ module Map (
       .cur_index(bot_index),
       .wall_tiles(wall_tiles),
       .breakable_tiles(after_break_tiles),
-      .powerup_tiles(powerup_tiles),
       .direction(bot_move_wire),
       .en(en),
       .new_index(new_bot_index)
@@ -206,7 +216,6 @@ module Map (
       .bomb_en(bomb_en),
       .wall_tiles(wall_tiles),
       .breakable_tiles(breakable_tiles),
-      .powerup_tiles(powerup_tiles),
       .random_number(random_seed),
       .dropBomb(keyBOMB_enemy),
       .direction(bot_move_wire)
@@ -277,27 +286,31 @@ module Map (
       if (bomb_countdown_enemy == 0) bomb_en[1] <= 0;
       
         // Player get push powerup
-        if (after_powerup_tiles[user_index] == 1) begin
+        if (after_powerup1_tiles[user_index] == 1) begin
             bomb_limit <= bomb_limit + (bomb_limit < 3);
-            after_powerup_tiles[user_index] <= 0;
+            after_powerup1_tiles[user_index] <= 0;
         end
-        else if (after_powerup_tiles[user_index] == 1) begin
+        else if (after_powerup2_tiles[user_index] == 1) begin
             bomb_range <= bomb_range + (bomb_limit < 3);
-            after_powerup_tiles[user_index] <= 0;
+            after_powerup2_tiles[user_index] <= 0;
         end
-        else if (after_powerup_tiles[user_index] == 1) begin
+        else if (after_powerup3_tiles[user_index] == 1) begin
             bomb_time <= bomb_time - 1000*(bomb_time > 1000);
-            after_powerup_tiles[user_index] <= 0;
+            after_powerup3_tiles[user_index] <= 0;
         end
-        else if (after_powerup_tiles[user_index] == 1) begin
+        else if (after_powerup4_tiles[user_index] == 1) begin
             player_health <= (player_health << 1) + 1;
-            after_powerup_tiles[user_index] <= 0;
+            after_powerup4_tiles[user_index] <= 0;
         end
     end else begin
       // Reset the enabled state when the module is disabled
       module_was_enabled <= 0;
       first_enable_keyBOMB_pressed <= 0;
-      after_powerup_tiles <= powerup_tiles;
+      after_powerup1_tiles <= powerup1_tiles;
+      after_powerup2_tiles <= powerup2_tiles;
+      after_powerup3_tiles <= powerup3_tiles;
+      after_powerup4_tiles <= powerup4_tiles;
+      after_powerup5_tiles <= powerup5_tiles;
     end
   end
 
