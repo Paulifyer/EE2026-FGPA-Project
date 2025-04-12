@@ -228,7 +228,7 @@ module Map (
     user_move = 0;
     bomb_countdown = 0;
     bomb_countdown_enemy = 0;
-    bomb_en = 2'b00;
+    bomb_en = 6'b000000;
     bomb_indices = 0;
     random_seed = 16'hACE1;
     module_was_enabled = 0;
@@ -260,18 +260,29 @@ module Map (
       end
 
       // Handle player bomb placement
-//      if (dropBomb) begin
-//        bomb_indices[6:0] <= user_index;  // Player bomb index
-//        bomb_en[0] <= 1;
-//        player_bombs_count <= player_bombs_count - 1;
-//      end
-        bomb_indices[20:0] <= bomb_tiles;
-        bomb_en[3:0] <= start_bomb[3:0];
+      //      if (dropBomb) begin
+      //        bomb_indices[6:0] <= user_index;  // Player bomb index
+      //        bomb_en[0] <= 1;
+      //        player_bombs_count <= player_bombs_count - 1;
+      //      end
+      bomb_indices[20:0] <= bomb_tiles;
+      bomb_en[3:0] <= start_bomb[3:0];
 
       // Handle enemy bomb placement
       if (dropBomb_enemy) begin
-        bomb_indices[27:21] <= bot_index;  // Enemy bomb index
-        bomb_en[4] <= 1;
+        // Set bomb at the correct index position based on enemy_bombs_count
+        case (enemy_bombs_count)
+          3: begin bomb_indices[27:21] <= bot_index;  
+              bomb_en[1] <= 1;
+            end
+          2: begin bomb_indices[34:28] <= bot_index;  
+              bomb_en[2] <= 1;
+            end
+          1: begin bomb_indices[41:35] <= bot_index;  
+              bomb_en[3] <= 1;
+            end
+          default: /* Do nothing if no bombs left */;
+        endcase
         enemy_bombs_count <= enemy_bombs_count - 1;
       end
       if (!empty & !busy) begin
@@ -337,6 +348,6 @@ module Map (
   // Bomb count indicator for LEDs
   assign bombs = (((3'b111 << start_bomb[2]) << start_bomb[1]) << start_bomb[0]) << (3-bomb_limit);
 
-//  assign health = 4'b0111;
+  //  assign health = 4'b0111;
 
 endmodule
