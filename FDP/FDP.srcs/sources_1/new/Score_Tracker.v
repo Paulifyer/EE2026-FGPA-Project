@@ -2,7 +2,7 @@
 
 module Score_Tracker(
     input clk_1s,
-    input en,
+    input [3:0] en,
     input reset,
     output reg [15:0] score,
     output reg is_high_score
@@ -22,7 +22,7 @@ module Score_Tracker(
             score <= 0;
             is_high_score <= 0;
         end
-        else if(en) begin
+        else if (en == 2) begin
             score <= score + 1;
             
             // Update high score when current score exceeds it

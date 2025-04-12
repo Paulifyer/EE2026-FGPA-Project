@@ -9,9 +9,7 @@ module drawCordinate (
     input [95:0] powerup_tiles,
     input [13:0] bomb_indices,
     input [1:0] bomb_en,
-//    input en,
-//    input [2:0] user_direction,
-//    input [2:0] bot_direction,
+    input [1:0] sel, //sprite selection
     output [15:0] oledColour
 );
 
@@ -95,11 +93,23 @@ module drawCordinate (
                         ~powerupActive & isPowerup ? POWERUP_BACKGROUND_GREEN : 
                         BLACK_COLOUR;
 
+  //To let users choose which sprite to play with
+  reg [63:0] spriteData [2:0];
+  reg [15:0] spriteColour [2:0];
+  initial begin
+          spriteData[0] = ORANGE_SPRITE_LEFT_DATA;
+          spriteData[1] = DINO_SPRITE_LEFT_DATA;
+          spriteData[2] = CAT_SPRITE_LEFT_DATA;
+          spriteColour[0] = 16'hFE40;
+          spriteColour[1] = DINO_COLOUR;
+          spriteColour[2] = CAT_COLOUR;
+  end
+  
   // Instantiate drawSquare for user and bot blocks with index-based approach
   drawSquare #(8) userSquare (
       .tile_index(user_index),
-      .colour(CAT_COLOUR),
-      .squareData(CAT_SPRITE_LEFT_DATA),
+      .colour(spriteColour[sel]),
+      .squareData(spriteData[sel]),
       .cordinateIndex(cordinateIndex),
       .oledColour(userSquareColour)
   );

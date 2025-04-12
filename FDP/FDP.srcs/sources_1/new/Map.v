@@ -7,7 +7,8 @@ module Map (
     keyLEFT,
     keyRIGHT,
     keyBOMB,
-    en,
+    input [3:0] state,
+    input [1:0] sel, //to pick sprites for player
     input JAin, //for UARTRx
     input [12:0] pixel_index,
     input [95:0] wall_tiles,
@@ -51,6 +52,7 @@ module Map (
   reg [2:0] player_bombs_count = 4, enemy_bombs_count = 4;
 
   // Button management
+
   wire keyBOMB_debounced;
   reg keyBOMB_prev, keyBOMB_enemy_prev;
   wire keyBOMB_posedge, keyBOMB_enemy_posedge;
@@ -62,6 +64,8 @@ module Map (
 
   // Random number generation
   reg [15:0] random_seed;
+  
+  wire en; //enable wire
 
   // Clock Divider for game timing
   slow_clock c1 (
@@ -77,6 +81,8 @@ module Map (
       .btn(keyBOMB),
       .btn_state(keyBOMB_debounced)
   );
+  
+  assign en = (state == 2);
 
   // Button edge detection logic
   assign keyBOMB_posedge = keyBOMB_debounced & ~keyBOMB_prev;
@@ -92,9 +98,7 @@ module Map (
       .powerup_tiles(powerup_tiles),
       .bomb_indices(bomb_indices),
       .bomb_en(bomb_en),
-//      .en(en),
-//      .user_direction(user_move),
-//      .bot_direction(bot_move_wire),
+      .sel(sel),
       .oledColour(pixel_data)
   );
 
