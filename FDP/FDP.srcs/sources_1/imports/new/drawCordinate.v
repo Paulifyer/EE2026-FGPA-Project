@@ -16,6 +16,8 @@ module drawCordinate (
     input [95:0] powerup5_tiles,
     input [41:0] bomb_indices, 
     input [5:0] bomb_en,
+    input user_dead,
+    input bot_dead,
     input [1:0] sel, //sprite selection
     output [15:0] oledColour
 );

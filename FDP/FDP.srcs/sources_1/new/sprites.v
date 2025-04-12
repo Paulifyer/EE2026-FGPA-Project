@@ -133,7 +133,7 @@ package sprites;
     8'b00111000
   };
   parameter BOMB_GREY = 16'ha554;
-  parameter BOMB_ORANGE = 16'ha554;
+  parameter BOMB_ORANGE = 16'hfa20;
   
   // Tombstone sprite data
   parameter TOMBSTONE_SPRITE_DATA = {  // REPLACES CHARACTERS WHEN THEY DIE
@@ -163,14 +163,14 @@ package sprites;
   
   // Explosion TRAIL sprite data
   parameter EXPLOSION_TRAIL_SPRITE_DATA = {  // EXPLOSION TRAIL VERTICALLY AND HORIZONTAL FROM BOMB
-      8'b00000000,
-      8'b00111110,
-      8'b00110110,
-      8'b00100010,
-      8'b00110110,
-      8'b00110110,
-      8'b00111110,
-      8'b01111111
+      8'b00001000,
+      8'b10001001,
+      8'b10101011,
+      8'b11101011,
+      8'b11111011,
+      8'b11111111,
+      8'b11111111,
+      8'b11111111
   };
   
   // Powerup: Bombup sprite data

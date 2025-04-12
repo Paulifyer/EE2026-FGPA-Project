@@ -21,7 +21,9 @@ module Map (
     input [95:0] powerup5_tiles,
     output [2:0] bombs,
     output [3:0] health,
-    output [15:0] pixel_data
+    output [15:0] pixel_data,
+    wire bombExploded,
+    output death
 );
 
   wire en;
@@ -84,7 +86,7 @@ module Map (
     wire [3:0] after_bot_health;
     wire [5:0] start_bomb;
     reg push_bomb_ability = 0;
-    bomb boom (clk,keyBOMB_posedge,en,push_bomb_ability,wall_tiles,breakable_tiles,bomb_indices[41:21],user_index,bot_index,player_health,bot_health,bomb_limit,bomb_range,bomb_time,after_break_tiles,explosion_display,bomb_tiles,health,after_bot_health,start_bomb);
+    bomb boom (clk,keyBOMB_posedge,en,push_bomb_ability,wall_tiles,breakable_tiles,bomb_indices[41:21],user_index,bot_index,player_health,bot_health,bomb_limit,bomb_range,bomb_time,after_break_tiles,explosion_display,bomb_tiles,health,after_bot_health,start_bomb, bombExploded);
 
   // Clock Divider for game timing
   slow_clock c1 (
@@ -142,6 +144,8 @@ module Map (
       .powerup5_tiles(powerup5_tiles),
       .bomb_indices(bomb_indices),
       .bomb_en(bomb_en),
+      .user_dead(player_health == 0 ? 1 : 0),
+      .bot_dead(player_health == 0 ? 1 : 0), // TODO CHANGE THIS ONE HAVE HP
       .sel(sel),
       .oledColour(pixel_data)
   );
@@ -350,6 +354,7 @@ module Map (
   // Bomb count indicator for LEDs
   assign bombs = (((3'b111 << start_bomb[2]) << start_bomb[1]) << start_bomb[0]) << (3-bomb_limit);
 
-  //  assign health = 4'b0111;
+  assign death = player_health == 0 ? 1 : 0;
+//  assign health = 4'b0111;
 
 endmodule

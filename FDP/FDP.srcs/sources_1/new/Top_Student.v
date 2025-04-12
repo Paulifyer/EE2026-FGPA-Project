@@ -27,10 +27,13 @@ module Top_Student (
     output [15:0] led,
     output [3:0] an,
     output hsync,
-    output vsync, JAout
+    output vsync, JAout,
+    output speaker
 );
 
   import Data_Item::*;
+
+//  parameter reset_pw = (1 << 7); // Password to reset game
 
   wire clk_6p25MHz, clk_1ms, segClk;
   wire clkOneSec;
@@ -40,7 +43,13 @@ module Top_Student (
   wire [15:0] oled_data, oled_game_map, oled_data_menu, oled_data_sprite;
   wire [95:0] wall_tiles;
   wire [95:0] breakable_tiles;
-  wire [95:0] powerup_tiles;
+  wire [95:0] powerup1_tiles;
+  wire [95:0] powerup2_tiles;
+  wire [95:0] powerup3_tiles;
+  wire [95:0] powerup4_tiles;
+  wire [95:0] powerup5_tiles;
+  wire bombExploded;
+  wire death;
 
   reg  [15:0] score;
   wire is_high_score;
@@ -86,6 +95,13 @@ module Top_Student (
   clock_generator_freq #(1000) c4 (
       clk,
       clk_1ms
+  );
+
+  song_top sound (
+      clk,
+      keyBOMB, keyUP, keyLEFT, keyRIGHT, keyDOWN,
+      bombExploded, death, ~state,
+      speaker
   );
 
   keyboard k1 (
@@ -198,7 +214,6 @@ module Top_Student (
       .vsync(vsync),
       .rgb(rgb)
   );
-
 
   assign oled_data = (state == 0) ? oled_data_menu :
                      (state == 1) ? oled_data_sprite :

@@ -18,7 +18,8 @@ module bomb(
     output [20:0] position_bomb_o,
     output reg [3:0] after_player_health,
                      after_bot_health,
-    output reg [5:0] start_bomb = 0  /* To enable countdown for bomb */
+    output reg [5:0] start_bomb = 0,  /* To enable countdown for bomb */
+    output reg bombExploded = 0
 );
 
   wire clk_1ms;  //, btnC_state;
