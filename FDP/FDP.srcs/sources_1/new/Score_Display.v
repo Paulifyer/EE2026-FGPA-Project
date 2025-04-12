@@ -3,6 +3,7 @@
 module Score_Display(
     input clk,
     input [15:0] score,
+    input is_high_score,
     output [7:0] seg,
     output [3:0] an
     );
@@ -12,10 +13,22 @@ module Score_Display(
     reg [1:0] digit_counter = 0;
     reg [7:0] chars [3:0];
     reg [3:0] bcd_chars [3:0];
+    
+    // Blink control for high score
+    reg [7:0] blink_counter = 0;
+    reg display_on = 1;
+    reg [7:0] empty_chars [3:0];
+    
+    initial begin
+        empty_chars[0] = SEG_EMPTY;
+        empty_chars[1] = SEG_EMPTY;
+        empty_chars[2] = SEG_EMPTY;
+        empty_chars[3] = SEG_EMPTY;
+    end
 
     segment_display s1 (
         .clk(clk),
-        .chars(chars),
+        .chars(display_on ? chars : empty_chars),
         .seg(seg),
         .an(an)
     );
@@ -29,6 +42,16 @@ module Score_Display(
     );
 
     always @(posedge clk) begin
+        if (is_high_score) begin
+            blink_counter <= blink_counter + 1;
+            if (blink_counter == 0) begin
+                display_on <= ~display_on;
+            end
+        end else begin
+            display_on <= 1; // Always display when not a high score
+        end
+        
+        // Update display characters
         digit_counter <= digit_counter + 1;
         case (digit_counter)
             2'b00: begin

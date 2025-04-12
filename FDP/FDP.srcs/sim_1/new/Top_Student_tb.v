@@ -5,10 +5,10 @@ module Top_Student_tb;
   // Inputs
   reg clk;
   reg btnC;
-  reg btnU;
-  reg btnL;
-  reg btnR;
-  reg btnD;
+  reg keyUP;
+  reg keyLEFT;
+  reg keyRIGHT;
+  reg keyDOWN;
   reg [15:0] sw;
 
   // Outputs
@@ -21,10 +21,10 @@ module Top_Student_tb;
   Top_Student uut (
     .clk(clk),
     .btnC(btnC),
-    .btnU(btnU),
-    .btnL(btnL),
-    .btnR(btnR),
-    .btnD(btnD),
+    .keyUP(keyUP),
+    .keyLEFT(keyLEFT),
+    .keyRIGHT(keyRIGHT),
+    .keyDOWN(keyDOWN),
     .sw(sw),
     .JB(JB),
     .rgb(rgb),
@@ -36,10 +36,10 @@ module Top_Student_tb;
     // Initialize Inputs
     clk = 0;
     btnC = 0;
-    btnU = 0;
-    btnL = 0;
-    btnR = 0;
-    btnD = 0;
+    keyUP = 0;
+    keyLEFT = 0;
+    keyRIGHT = 0;
+    keyDOWN = 0;
     sw = 0;
 
     // Wait for global reset
@@ -58,14 +58,14 @@ module Top_Student_tb;
         sw  = (1 << 15) | (1 << 8) | (1 << 7) | (1 << 5) | (1 << 3) | (1 << 1) | (1 << 0); // Example switch setting
         #10 btnC = 1;
         #10 btnC = 0;
-        #10 btnU = 1;
-        #10 btnU = 0;
-        #10 btnL = 1;
-        #10 btnL = 0;
-        #10 btnR = 1;
-        #10 btnR = 0;
-        #10 btnD = 1;
-        #10 btnD = 0;
+        #10 keyUP = 1;
+        #10 keyUP = 0;
+        #10 keyLEFT = 1;
+        #10 keyLEFT = 0;
+        #10 keyRIGHT = 1;
+        #10 keyRIGHT = 0;
+        #10 keyDOWN = 1;
+        #10 keyDOWN = 0;
   end
 
   always #5 clk = ~clk; // Generate clock signal

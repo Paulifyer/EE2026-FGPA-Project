@@ -43,6 +43,7 @@ module Top_Student (
   wire [95:0] powerup_tiles;
 
   reg  [15:0] score;
+  wire is_high_score;
   reg  [ 7:0] current_key;
 
   //   assign led = current_key;
@@ -51,10 +52,19 @@ module Top_Student (
   wire key_W, key_A, key_S, key_D, key_B, key_ENTER;
 
   // generte wall tiles 1 for wall 0 for no wall sparese
+  assign breakable_tiles = 96'h000_0AA_004_6B0_012_200_094_000;
   assign wall_tiles         = 96'hFFF_945_C11_901_825_C81_829_FFF; // GAME MAP
   assign breakable_tiles    = 96'h000_0AA_004_6B0_012_200_094_000;
 //  assign powerup_tiles      = 96'h000_082_0F4_420_002_278_010_000; //TESTING
   assign powerup_tiles      = 96'h000_082_004_420_002_200_010_000; // ACTUAL
+
+  wire keyUP, keyDOWN, keyLEFT, keyRIGHT, keyBOMB, keySELECT;
+  assign keyUP    = btnU | key_W;
+  assign keyDOWN  = btnD | key_S;
+  assign keyLEFT  = btnL | key_A;
+  assign keyRIGHT = btnR | key_D;
+  assign keyBOMB = btnC | key_B;
+    assign keySELECT = btnC | key_ENTER;
 
   // CLOCK GENERATOR
   slow_clock c1 (
@@ -89,12 +99,13 @@ module Top_Student (
   Score_Display s1 (
       clk_1ms,
       score,
+      is_high_score,
       seg,
       an
   );
 
   StateManager sM (
-      (btnC | key_ENTER),
+      keySELECT,
       clk,
       state
   );
@@ -127,16 +138,18 @@ module Top_Student (
   Score_Tracker scoreTrack (
       clkOneSec,
       state,
-      score
+      key_ENTER,
+      score,
+      is_high_score
   );
 
   Map map (
       .clk(clk),
-      .btnD(btnD | key_S),
-      .btnU(btnU | key_W),
-      .btnL(btnL | key_A),
-      .btnR(btnR | key_D),
-      .btnC(btnC | key_B),
+      .keyDOWN(keyDOWN),
+      .keyUP(keyUP),
+      .keyLEFT(keyLEFT),
+      .keyRIGHT(keyRIGHT),
+      .keyBOMB(keyBOMB),
       .en(state),
       .JAin(JAin),
       .pixel_index(pixel_index),
@@ -154,10 +167,11 @@ module Top_Student (
       .clk(clk),
       .pixel_data(oled_data),
       .score(score),
+      .is_high_score(is_high_score),
       .pixel_index(pixel_index),
+      .bombs(led[15:12]),
       .hsync(hsync),
       .vsync(vsync),
-      .bombs(led[15:12]),
       .rgb(rgb)
   );
 
