@@ -75,7 +75,7 @@ module Map (
     reg [3:0] player_health = 4'b1111;
     wire [5:0] start_bomb;
     reg push_bomb_ability = 0;
-    bomb boom (clk,keyBOMB_posedge,en,push_bomb_ability,wall_tiles,breakable_tiles,bomb_indices[20:0],user_index,player_health,bomb_limit,bomb_range,bomb_time,after_break_tiles,explosion_display,bomb_tiles,health,start_bomb);
+    bomb boom (clk,keyBOMB_posedge,en,push_bomb_ability,wall_tiles,breakable_tiles,bomb_indices[41:21],user_index,player_health,bomb_limit,bomb_range,bomb_time,after_break_tiles,explosion_display,bomb_tiles,health,start_bomb);
 
   // Clock Divider for game timing
   slow_clock c1 (
@@ -321,7 +321,7 @@ module Map (
   end
 
   // Bomb count indicator for LEDs
-  assign bombs = ~((((3'b111 >> start_bomb[2]) >> start_bomb[1]) >> start_bomb[0]));
+  assign bombs = (((3'b111 << start_bomb[2]) << start_bomb[1]) << start_bomb[0]) << (3-bomb_limit);
 
 //  assign health = 4'b0111;
 
