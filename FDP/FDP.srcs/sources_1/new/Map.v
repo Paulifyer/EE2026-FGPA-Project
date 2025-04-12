@@ -137,11 +137,11 @@ module Map (
       .explosion_display(explosion_display),
       .user_direction(user_move),
       .bot_direction(bot_move_wire),
-      .powerup1_tiles(powerup1_tiles),
-      .powerup2_tiles(powerup2_tiles),
-      .powerup3_tiles(powerup3_tiles),
-      .powerup4_tiles(powerup4_tiles),
-      .powerup5_tiles(powerup5_tiles),
+      .powerup1_tiles(after_powerup1_tiles),
+      .powerup2_tiles(after_powerup2_tiles),
+      .powerup3_tiles(after_powerup3_tiles),
+      .powerup4_tiles(after_powerup4_tiles),
+      .powerup5_tiles(after_powerup5_tiles),
       .bomb_indices(bomb_indices),
       .bomb_en(bomb_en),
       .user_dead(player_health == 0 ? 1 : 0),
@@ -271,8 +271,8 @@ module Map (
       //        bomb_en[0] <= 1;
       //        player_bombs_count <= player_bombs_count - 1;
       //      end
+      bomb_en <= start_bomb;
       bomb_indices[20:0] <= bomb_tiles;
-      bomb_en[2:0] <= start_bomb[2:0];
 
       // Handle enemy bomb placement
       if (dropBomb_enemy) begin
@@ -291,6 +291,11 @@ module Map (
         endcase
         enemy_bombs_count <= enemy_bombs_count - 1;
       end
+      else begin
+          bomb_indices[27:21] <= start_bomb[3] ? bomb_indices[27:21] : 127;
+          bomb_indices[34:28] <= start_bomb[4] ? bomb_indices[34:28] : 127;
+          bomb_indices[41:35] <= start_bomb[5] ? bomb_indices[41:35] : 127;
+      end
       if (!empty & !busy) begin
         readEn <= 1'b1;
         data = readData;
@@ -308,16 +313,20 @@ module Map (
             after_powerup1_tiles[user_index] <= 0;
         end
         else if (after_powerup2_tiles[user_index] == 1) begin
-            bomb_range <= bomb_range + (bomb_limit < 3);
+            push_bomb_ability <= 1;
             after_powerup2_tiles[user_index] <= 0;
         end
         else if (after_powerup3_tiles[user_index] == 1) begin
-            bomb_time <= bomb_time - 1000*(bomb_time > 1000);
+            player_health <= (player_health << 1) + 1;
             after_powerup3_tiles[user_index] <= 0;
         end
         else if (after_powerup4_tiles[user_index] == 1) begin
-            player_health <= (player_health << 1) + 1;
+            bomb_time <= bomb_time - 1000*(bomb_time > 1000);
             after_powerup4_tiles[user_index] <= 0;
+        end
+        else if (after_powerup5_tiles[user_index] == 1) begin
+            bomb_range <= bomb_range + (bomb_limit < 3);
+            after_powerup5_tiles[user_index] <= 0;
         end
     end else begin
       // Reset the enabled state when the module is disabled
