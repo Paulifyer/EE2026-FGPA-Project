@@ -8,10 +8,10 @@ module drawCordinate (
     input [95:0] breakable_tiles,
     input [95:0] explosion_display,
     input [95:0] powerup_tiles,
+    input [41:0] bomb_indices, 
+    input [5:0] bomb_en,
     input [2:0] user_direction,
     input [2:0] bot_direction,
-    input [13:0] bomb_indices,
-    input [1:0] bomb_en,
     input user_dead,
     input bot_dead,
     input [1:0] sel, //sprite selection
@@ -29,6 +29,10 @@ module drawCordinate (
   wire [15:0] botSquareColour;
   wire [15:0] bombSquareColour_1;
   wire [15:0] bombSquareColour_2;
+  wire [15:0] bombSquareColour_3;
+  wire [15:0] bombSquareColour_4;
+  wire [15:0] bombSquareColour_5;
+  wire [15:0] bombSquareColour_6;
   wire [15:0] objectColour;
 
   // Calculate current pixel coordinates
@@ -63,6 +67,10 @@ module drawCordinate (
   // Extract bomb indices directly from the input
   wire [6:0] bomb_index_1 = bomb_indices[6:0];
   wire [6:0] bomb_index_2 = bomb_indices[13:7];
+  wire [6:0] bomb_index_3 = bomb_indices[20:14];
+  wire [6:0] bomb_index_4 = bomb_indices[27:21];
+  wire [6:0] bomb_index_5 = bomb_indices[34:28];
+  wire [6:0] bomb_index_6 = bomb_indices[41:35];
   
   parameter BLACK_COLOUR = 16'h0000;  // Black
                         
@@ -124,9 +132,45 @@ module drawCordinate (
       .oledColour(bombSquareColour_2)
   );
 
+  drawSquare #(8) bombSquare_3 (
+      .tile_index(bomb_index_3),
+      .colour(BOMB_GREY),
+      .squareData(BOMB_SPRITE_DATA),
+      .cordinateIndex(cordinateIndex),
+      .oledColour(bombSquareColour_3)
+  );
+
+  drawSquare #(8) bombSquare_4 (
+      .tile_index(bomb_index_4),
+      .colour(BOMB_ORANGE),
+      .squareData(BOMB_SPRITE_DATA),
+      .cordinateIndex(cordinateIndex),
+      .oledColour(bombSquareColour_4)
+  );
+
+  drawSquare #(8) bombSquare_5 (
+      .tile_index(bomb_index_5),
+      .colour(BOMB_GREY),
+      .squareData(BOMB_SPRITE_DATA),
+      .cordinateIndex(cordinateIndex),
+      .oledColour(bombSquareColour_5)
+  );
+
+  drawSquare #(8) bombSquare_6 (
+      .tile_index(bomb_index_6),
+      .colour(BOMB_ORANGE),
+      .squareData(BOMB_SPRITE_DATA),
+      .cordinateIndex(cordinateIndex),
+      .oledColour(bombSquareColour_6)
+  );
+
   // Combine elements with priority: bot, user, then wall
   assign oledColour = botSquareColour | userSquareColour | 
                      (bomb_en[0] ? bombSquareColour_1 : BLACK_COLOUR) | 
                      (bomb_en[1] ? bombSquareColour_2 : BLACK_COLOUR) | 
+                     (bomb_en[2] ? bombSquareColour_3 : BLACK_COLOUR) | 
+                     (bomb_en[3] ? bombSquareColour_4 : BLACK_COLOUR) | 
+                     (bomb_en[4] ? bombSquareColour_5 : BLACK_COLOUR) | 
+                     (bomb_en[5] ? bombSquareColour_6 : BLACK_COLOUR) | 
                      objectColour;
 endmodule

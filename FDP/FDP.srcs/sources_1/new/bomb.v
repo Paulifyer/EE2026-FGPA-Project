@@ -15,8 +15,7 @@ module bomb(
     output reg [95:0] explosion_display,
     output [6:0][2:0] position_bomb_o,
     output reg [3:0] after_player_health,
-    output reg [3:0] start_bomb = 0, /* To enable countdown for bomb */
-    output reg bombExploded = 0
+    output reg [5:0] start_bomb = 0 /* To enable countdown for bomb */
     );
     
     wire clk_1ms;//, btnC_state;
@@ -74,13 +73,18 @@ module bomb(
                 start_bomb[2] <= 1;
             end
         end
-        if (other_position_bomb[0] != other_position_bomb_i[6:0]) begin
+        if (other_position_bomb[0] != other_position_bomb_i[6:0] || other_position_bomb[1] != other_position_bomb_i[13:7] || other_position_bomb[2] != other_position_bomb_i[20:14]) begin
             other_position_bomb[0] <= other_position_bomb_i[6:0];
+            other_position_bomb[1] <= other_position_bomb_i[13:7];
+            other_position_bomb[2] <= other_position_bomb_i[20:14];
             if (other_position_bomb[0] != 127) begin
-                start_bomb[2] <= 1;
+                start_bomb[3] <= 1;
             end
             if (other_position_bomb[1] != 127) begin
-                start_bomb[3] <= 1;
+                start_bomb[4] <= 1;
+            end
+            if (other_position_bomb[2] != 127) begin
+                start_bomb[5] <= 1;
             end
         end
         /* Explosion display and damage player health*/
@@ -96,6 +100,7 @@ module bomb(
                 bomb_dmg_once <= 0;
                 position_bomb[0] <= start_bomb[0] ? position_bomb[0] : 127;
                 position_bomb[1] <= start_bomb[1] ? position_bomb[1] : 127;
+                position_bomb[2] <= start_bomb[2] ? position_bomb[2] : 127;
             end
         end
         else if (explode_bomb || e_explode_bomb) begin

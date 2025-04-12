@@ -47,7 +47,7 @@ module Map (
   wire [ 2:0] bot_move_wire;  // Bot movement wire from AI
 
   // Bomb management
-  reg  [13:0] bomb_indices;
+  reg  [41:0] bomb_indices;
   reg  [ 1:0] bomb_en;
   reg [3:0] bomb_countdown, bomb_countdown_enemy;
   wire dropBomb, dropBomb_enemy;
@@ -70,16 +70,15 @@ module Map (
   wire en;  //enable wire
 
     reg [95:0] after_powerup_tiles;
-    wire [13:0] bomb_tiles;
+    wire [20:0] bomb_tiles;
     wire [95:0] after_break_tiles, explosion_display;
-    reg [2:0] bomb_limit = 1, bomb_range = 2;
+    reg [2:0] bomb_limit = 1, bomb_range = 1;
     reg [13:0] bomb_time = 10000;
     reg [3:0] player_health = 4'b1111;
-    wire [3:0] start_bomb;
+    wire [5:0] start_bomb;
     reg push_bomb_ability = 0;
     wire bombExploded;
-    
-    bomb boom (clk,keyBOMB_posedge,en,push_bomb_ability,wall_tiles,breakable_tiles,bomb_indices[13:7],user_index,player_health,bomb_limit,bomb_range,bomb_time,after_break_tiles,explosion_display,bomb_tiles,health,start_bomb, bombExploded);
+    bomb boom (clk,keyBOMB_posedge,en,push_bomb_ability,wall_tiles,breakable_tiles,bomb_indices[20:0],user_index,player_health,bomb_limit,bomb_range,bomb_time,after_break_tiles,explosion_display,bomb_tiles,health,start_bomb);
 
   // Clock Divider for game timing
   slow_clock c1 (
@@ -263,7 +262,7 @@ module Map (
 //        bomb_en[0] <= 1;
 //        player_bombs_count <= player_bombs_count - 1;
 //      end
-        bomb_indices[6:0] <= bomb_tiles[6:0];
+        bomb_indices[20:0] <= bomb_tiles[20:0];
         bomb_en[0] <= start_bomb[0];
 
       // Handle enemy bomb placement
@@ -329,11 +328,7 @@ module Map (
   end
 
   // Bomb count indicator for LEDs
-  assign bombs = player_bombs_count == 4 ? 4'b1111 : 
-                 player_bombs_count == 3 ? 4'b1110 : 
-                 player_bombs_count == 2 ? 4'b1100 : 
-                 player_bombs_count == 1 ? 4'b1000 : 
-                 4'b0000;
+  assign bombs = ~((((3'b111 >> start_bomb[2]) >> start_bomb[1]) >> start_bomb[0]));
 
   assign death = player_health == 0 ? 1 : 0;
 //  assign health = 4'b0111;
