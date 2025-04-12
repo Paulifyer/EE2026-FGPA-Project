@@ -25,16 +25,23 @@
 module PacketParser(
     input [15:0] inputPacket,
     input clk,
+    input isRead,
     output reg busy = 1'b0,
     output reg [2:0] packetType,
     output reg [12:0] data
     );
     
+    reg parsedInternal = 0;
+    
     always @ (posedge clk) begin
-        if (!busy) begin
-            busy <= 1;
+        if (!parsedInternal) begin
+            parsedInternal <= 1'b1;
             packetType <= inputPacket[15:13];
             data <= inputPacket[12:0];
-        end else busy <= 1;
+        end
+        if (isRead & parsedInternal) begin
+            parsedInternal <= 1'b0;
+        end
+        busy <= parsedInternal;
     end
 endmodule

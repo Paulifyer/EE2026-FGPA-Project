@@ -14,7 +14,7 @@ module Map (
     input [12:0] pixel_index,
     input [95:0] wall_tiles,
     output JAout, //for UARTTx
-    output [3:0] led,
+    output [6:0] led,
     input [95:0] breakable_tiles,
     input [95:0] powerup_tiles,
     output [3:0] bombs,
@@ -84,6 +84,7 @@ module Map (
   );
   
   assign en = (state == 2);
+ 
 
   // Button edge detection logic
   assign keyBOMB_posedge = keyBOMB_debounced & ~keyBOMB_prev;
@@ -133,6 +134,8 @@ module Map (
     UartTx send (clk, tx_start, rx_receiving, data, JAout, busy);
     
     reg ready = 1'b0; //checks when acknowledge packet is received
+    
+    assign led[6] = ready; //LD[6] will light up when both boards are in ready state
     wire valid, isReceiving;
     wire [2:0] packetType;
     wire [12:0] dataReceived;
@@ -163,13 +166,15 @@ module Map (
     wire pBusy;
     wire [2:0] pType;
     wire [12:0] pData;
+    reg isRead;
     reg [15:0] inputPacket;
-    PacketParser pp (inputPacket, clk, pBusy, pType, pData);
+    reg readLatch = 0;
+    PacketParser pp (inputPacket, clk, isRead, pBusy, pType, pData);
 
   // Enemy AI movement controller
   enemy_movement enemy_move (
       .clk(clk1p0),
-      .en(en & ~sw[0]),
+      .en(en & ~sw[0]), //disables when sw[0] is HIGH
       .bot_index(bot_index),
       .user_index(user_index),
       .bomb_indices(bomb_indices),
@@ -202,7 +207,7 @@ module Map (
 
   // Input processing and bomb management (fast clock domain)
   always @(posedge clk) begin
-    if (ready == 1'b0) begin
+    if (ready == 1'b0 && sw[0]) begin
         case (sw) 
             3'b011: begin //if master
                 if (!busy) begin //starts sending a master packet
@@ -239,7 +244,7 @@ module Map (
     //          pData: the data of the packet
     if (!emptyR & !pBusy) begin
         readEnR <= 1;
-        inputPacket = readData;
+        inputPacket <= readData;
     end else readEnR <= 0;
     if (en) begin
       keyBOMB_prev <= keyBOMB_debounced;
@@ -285,7 +290,7 @@ module Map (
         tx_start <= 1;
       end else begin
         readEn <= 1'b0;
-        if (!busy) tx_start <= 0;
+        tx_start <= 0;
       end  
       
       // Reset bomb status when countdown reaches zero
@@ -298,6 +303,7 @@ module Map (
     end
   end
 
+  
   // Game state updates (slow clock domain)
   always @(posedge clk1p0) begin
     // Update bomb countdown timers
@@ -315,7 +321,13 @@ module Map (
     end else writeEn <= 1'b0;
     // Update player positions using indices
     user_index <= en ? new_user_index : (GREEN_Y_TILE * GRID_WIDTH + GREEN_X_TILE);
-    bot_index <= en ? new_bot_index : (YELLOW_Y_TILE * GRID_WIDTH + YELLOW_X_TILE);
+    if (ready && pType == 3'b000 && !pBusy && !readLatch) begin
+        bot_index <= pData[6:0];
+        isRead <= 1;
+        readLatch <= 1;
+    end else isRead <= 0;
+    if (pBusy) readLatch <= 0;
+    bot_index <= (en && !ready) ? new_bot_index : (YELLOW_Y_TILE * GRID_WIDTH + YELLOW_X_TILE);
   end
 
   // Bomb count indicator for LEDs
