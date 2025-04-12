@@ -277,10 +277,21 @@ module Map (
       
         // Player get push powerup
         if (after_powerup_tiles[user_index] == 1) begin
-            push_bomb_ability <= 1;
+            bomb_limit <= bomb_limit + (bomb_limit < 3);
             after_powerup_tiles[user_index] <= 0;
         end
-        
+        else if (after_powerup_tiles[user_index] == 1) begin
+            bomb_range <= bomb_range + (bomb_limit < 3);
+            after_powerup_tiles[user_index] <= 0;
+        end
+        else if (after_powerup_tiles[user_index] == 1) begin
+            bomb_time <= bomb_time - 1000*(bomb_time > 1000);
+            after_powerup_tiles[user_index] <= 0;
+        end
+        else if (after_powerup_tiles[user_index] == 1) begin
+            player_health <= (player_health << 1) + 1;
+            after_powerup_tiles[user_index] <= 0;
+        end
     end else begin
       // Reset the enabled state when the module is disabled
       module_was_enabled <= 0;
