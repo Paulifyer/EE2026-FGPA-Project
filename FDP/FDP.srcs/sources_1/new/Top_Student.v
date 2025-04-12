@@ -33,6 +33,8 @@ module Top_Student (
 
   import Data_Item::*;
 
+//  parameter reset_pw = (1 << 7); // Password to reset game
+
   wire clk_6p25MHz, clk_1ms, segClk;
   wire clkOneSec;
   wire [3:0] state;  //Ethan : stuff for the menu
@@ -42,6 +44,8 @@ module Top_Student (
   wire [95:0] wall_tiles;
   wire [95:0] breakable_tiles;
   wire [95:0] powerup_tiles;
+  wire bombExploded;
+  wire death;
 
   reg  [15:0] score;
   wire is_high_score;
@@ -87,7 +91,7 @@ module Top_Student (
   song_top sound (
       clk,
       keyBOMB, keyUP, keyLEFT, keyRIGHT, keyDOWN,
-//      explosion,
+      bombExploded, death, ~state,
       speaker
   );
 
@@ -182,7 +186,9 @@ module Top_Student (
       .health(led[3:0]),
       .breakable_tiles(breakable_tiles),
       .powerup_tiles(powerup_tiles),
-      .pixel_data(oled_game_map)
+      .pixel_data(oled_game_map),
+      .bombExploded(bombExploded),
+      .death(death)
   );
 
 
@@ -198,7 +204,6 @@ module Top_Student (
       .vsync(vsync),
       .rgb(rgb)
   );
-
 
   assign oled_data = (state == 0) ? oled_data_menu :
                      (state == 1) ? oled_data_sprite :

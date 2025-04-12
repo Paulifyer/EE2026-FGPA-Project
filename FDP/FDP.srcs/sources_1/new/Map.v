@@ -17,7 +17,9 @@ module Map (
     input [95:0] powerup_tiles,
     output [3:0] bombs,
     output [3:0] health,
-    output [15:0] pixel_data
+    output [15:0] pixel_data,
+    wire bombExploded,
+    output death
 );
 
   // Parameters
@@ -75,7 +77,9 @@ module Map (
     reg [3:0] player_health = 4'b1111;
     wire [3:0] start_bomb;
     reg push_bomb_ability = 0;
-    bomb boom (clk,keyBOMB_posedge,en,push_bomb_ability,wall_tiles,breakable_tiles,bomb_indices[13:7],user_index,player_health,bomb_limit,bomb_range,bomb_time,after_break_tiles,explosion_display,bomb_tiles,health,start_bomb);
+    wire bombExploded;
+    
+    bomb boom (clk,keyBOMB_posedge,en,push_bomb_ability,wall_tiles,breakable_tiles,bomb_indices[13:7],user_index,player_health,bomb_limit,bomb_range,bomb_time,after_break_tiles,explosion_display,bomb_tiles,health,start_bomb, bombExploded);
 
   // Clock Divider for game timing
   slow_clock c1 (
@@ -129,6 +133,8 @@ module Map (
       .bot_direction(bot_move_wire),
       .bomb_indices(bomb_indices),
       .bomb_en(bomb_en),
+      .user_dead(player_health == 0 ? 1 : 0),
+      .bot_dead(player_health == 0 ? 1 : 0), // TODO CHANGE THIS ONE HAVE HP
       .sel(sel),
       .oledColour(pixel_data)
   );
@@ -329,6 +335,7 @@ module Map (
                  player_bombs_count == 1 ? 4'b1000 : 
                  4'b0000;
 
+  assign death = player_health == 0 ? 1 : 0;
 //  assign health = 4'b0111;
 
 endmodule

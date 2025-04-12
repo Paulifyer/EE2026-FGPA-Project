@@ -12,6 +12,8 @@ module drawCordinate (
     input [2:0] bot_direction,
     input [13:0] bomb_indices,
     input [1:0] bomb_en,
+    input user_dead,
+    input bot_dead,
     input [1:0] sel, //sprite selection
     output [15:0] oledColour
 );
@@ -68,7 +70,8 @@ module drawCordinate (
   assign objectColour = ~wallActive & isWall ? WALL_COLOUR : 
                         ~brickActive & isBreakable ? BRICK_COLOUR : 
                         ~powerupActive & isPowerup ? POWERUP_BACKGROUND_GREEN : 
-                        ~explodeActive & exploded ? EXPLOSION_ORANGE : BLACK_COLOUR;
+                        ~explodeActive & exploded ? EXPLOSION_ORANGE : 
+                        BLACK_COLOUR;
 
   //To let users choose which sprite to play with
   reg [63:0] spriteDataLeft [2:0];
@@ -89,16 +92,18 @@ module drawCordinate (
   // Instantiate drawSquare for user and bot blocks with index-based approach
   drawSquare #(8) userSquare (
       .tile_index(user_index),
-      .colour(spriteColour[sel]),
-      .squareData((user_direction == 1 || user_direction == 4)? spriteDataLeft[sel] : spriteDataRight[sel]),
+      .colour(user_dead == 1? TOMBSTONE_GREY : spriteColour[sel]),
+      .squareData(user_dead == 1? TOMBSTONE_SPRITE_DATA : 
+                 (user_direction == 1 || user_direction == 4)? spriteDataLeft[sel] : spriteDataRight[sel]),
       .cordinateIndex(cordinateIndex),
       .oledColour(userSquareColour)
   );
 
   drawSquare #(8) botSquare (
       .tile_index(bot_index),
-      .colour(DINO_COLOUR),
-      .squareData((bot_direction == 1 || bot_direction == 4)? DINO_SPRITE_LEFT_DATA : DINO_SPRITE_RIGHT_DATA),
+      .colour(user_dead == 1? TOMBSTONE_GREY : DINO_COLOUR),
+      .squareData(bot_dead == 1? TOMBSTONE_SPRITE_DATA : 
+                 (bot_direction == 1 || bot_direction == 4)? DINO_SPRITE_LEFT_DATA : DINO_SPRITE_RIGHT_DATA),
       .cordinateIndex(cordinateIndex),
       .oledColour(botSquareColour)
   );

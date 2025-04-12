@@ -1,13 +1,9 @@
 `timescale 1ns / 1ps
-/////////////////////////////////////////////////////////////////////////////// 
-// Authored by David J Marion aka FPGA Dude
-// Created on 4/29/2022
-// Playing Star Wars "Imperial March" on speaker driven by the Basys 3 FPGA.
-/////////////////////////////////////////////////////////////////////////////// 
 
 module song_top(
     input clk_100MHz,       // from Basys 3
     input btnC, btnU, btnL, btnR, btnD,
+    input explosion, death, menu,
     output speaker          // PMOD JC[0]
     );
     
@@ -23,6 +19,9 @@ module song_top(
     wire w_play_L;
     wire w_play_R;
     wire w_play_C;
+    wire w_play_explosion;
+    wire w_play_death;
+    wire w_play_menu;
     
     always @(posedge clk_100MHz) begin
         xD <= btnD;
@@ -51,10 +50,12 @@ module song_top(
     assign w_play_L = zL;
     assign w_play_R = zR;
     assign w_play_C = zC;
+    assign w_play_explosion = explosion;
+    assign w_play_menu = menu;
+    assign w_play_death = death;
     
     // Signals for each tone
     wire a, cH, eH, fH, f, gS;
-//    wire a0, e1, e2;
     
     // Instantiate tone modules
     f_349Hz   t_f (.clk_100MHz(clk_100MHz), .o_349Hz(f));
@@ -63,12 +64,6 @@ module song_top(
     cH_523Hz  t_cH(.clk_100MHz(clk_100MHz), .o_523Hz(cH));
     eH_659Hz  t_eH(.clk_100MHz(clk_100MHz), .o_659Hz(eH));
     fH_698Hz  t_fH(.clk_100MHz(clk_100MHz), .o_698Hz(fH));
-
-    
-//    a0_27_5Hz  t_a0(.clk_100MHz(clk_100MHz), .o_27_5Hz(a0)); // NEW FREQ DONT WORK AND CAUSE ERRORS, calculations inside file error
-//    e1_41_2Hz  t_e1(.clk_100MHz(clk_100MHz), .o_41_2Hz(e1));
-//    e2_82_41Hz  t_e2(.clk_100MHz(clk_100MHz), .o_82_41Hz(e2));
-
     
     // Song Note Delays
     parameter CLK_FREQ = 100_000_000;                   // 100MHz
@@ -128,23 +123,30 @@ module song_top(
             "idle" : begin
                 counter_clear <= 1'b1;
                 if(w_play_U) begin
-//                    state <= "n1"; // STARWARS [MENU]
-                    state <= "PU0"; // POWERUPS and BUTTON PRESS
+                    state <= "PU0"; // BUTTON PRESS
+                end 
+                else if(w_play_menu) begin
+                    state <= "n1"; // STARWARS [MENU]
+                end 
+                else if(w_play_death) begin
+                    state <= "BGM0"; // DEATH
                 end 
                 else if(w_play_D) begin
-//                    state <= "BGM0"; // MENU MUSIC and DEATH
-                    state <= "PU0"; // POWERUPS and BUTTON PRESS
+                    state <= "PU0"; // BUTTON PRESS
                 end    
                 else if(w_play_L) begin
-                    state <= "PU0"; // POWERUPS and BUTTON PRESS
+                    state <= "PU0"; // BUTTON PRESS
                 end    
                 else if(w_play_R) begin
-//                    state <= "ex0"; // EXPLOSION
-                    state <= "PU0"; // POWERUPS and BUTTON PRESS
+
+                    state <= "PU0"; // BUTTON PRESS
                 end    
                 else if(w_play_C) begin
                     state <= "sel0"; // SELECT SOUND and DROP BOMB
                 end    
+                else if(w_play_explosion) begin
+                    state <= "ex0"; // EXPLOSION
+                end 
                 
             end
             

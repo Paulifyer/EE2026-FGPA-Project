@@ -14,8 +14,8 @@ module StateManager (
   reg lastInput = 1'b0;
   always @(posedge clk) begin
     if (keySELECT & ~lastInput)
-      if (state == MENU) state = SPRITE;
-      else if (state == SPRITE) state = GAME;
+      if (state == MENU) state <= SPRITE;
+      else if (state == SPRITE) state <= GAME;
     lastInput = keySELECT;
   end
 endmodule
