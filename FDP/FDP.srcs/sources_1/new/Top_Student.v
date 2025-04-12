@@ -78,6 +78,8 @@ module Top_Student (
       clkOneSec
   );
 
+    wire is_game_in_progress;
+    assign is_game_in_progress = (state == 4'b0010) & led[0];
   clock_generator_freq #(1000) c4 (
       clk,
       clk_1ms
@@ -106,6 +108,7 @@ module Top_Student (
 
   StateManager sM (
       keySELECT,
+        is_game_in_progress,
       clk,
       state
   );
@@ -148,15 +151,13 @@ module Top_Student (
       JB[6],
       JB[7]
   );
-
   Score_Tracker scoreTrack (
       clkOneSec,
       state,
-      key_ENTER,
+      is_game_in_progress,
       score,
       is_high_score
   );
-
   Map map (
       .clk(clk),
       .keyDOWN(keyDOWN),

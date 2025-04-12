@@ -20,6 +20,8 @@ module Map (
     output [15:0] pixel_data
 );
 
+  wire en;
+
   // Parameters
   parameter TILE_SIZE = 8;  // Tile size in pixels
   parameter GRID_WIDTH = 12;  // 12 tiles horizontally
@@ -49,7 +51,7 @@ module Map (
   reg  [ 1:0] bomb_en;
   reg [3:0] bomb_countdown, bomb_countdown_enemy;
   wire dropBomb, dropBomb_enemy;
-  reg [2:0] player_bombs_count = 4, enemy_bombs_count = 4;
+  reg [1:0] player_bombs_count = 3, enemy_bombs_count = 3;
 
   // Button management
   wire keyBOMB_debounced;
@@ -64,8 +66,6 @@ module Map (
 
   // Random number generation
   reg [15:0] random_seed;
-
-  wire en;  //enable wire
 
     reg [95:0] after_powerup_tiles;
     wire [20:0] bomb_tiles;
@@ -91,7 +91,7 @@ module Map (
       .btn(keyBOMB),
       .btn_state(keyBOMB_debounced)
   );
-  
+
   reg [1:0] state_counter = 0;
   reg en_delayed = 0;
 
@@ -106,11 +106,11 @@ module Map (
       en_delayed <= 0;
       state_counter <= 0;
     end else begin
-      en_delayed <= en_delayed; // Maintain the current state of en_delayed
+      en_delayed <= en_delayed;  // Maintain the current state of en_delayed
     end
   end
 
-  assign en = en_delayed;
+  assign en = en_delayed & health[0] & (state == 2);
 
   // Button edge detection logic
   assign keyBOMB_posedge = keyBOMB_debounced & ~keyBOMB_prev;
@@ -228,8 +228,8 @@ module Map (
   end
 
   // Bomb placement logic
-  assign dropBomb = (en && player_bombs_count != 0) ? keyBOMB_posedge : 0;
-  assign dropBomb_enemy = (en && enemy_bombs_count != 0) ? keyBOMB_enemy_posedge : 0;
+  assign dropBomb = (en & player_bombs_count != 0) ? keyBOMB_posedge : 0;
+  assign dropBomb_enemy = (en & enemy_bombs_count != 0) ? keyBOMB_enemy_posedge : 0;
 
   // Input processing and bomb management (fast clock domain)
   always @(posedge clk) begin
@@ -244,7 +244,7 @@ module Map (
       if (!module_was_enabled) begin
         module_was_enabled <= 1;
         first_enable_keyBOMB_pressed <= keyBOMB_debounced;
-      end else if (first_enable_keyBOMB_pressed && !keyBOMB_debounced) begin
+      end else if (first_enable_keyBOMB_pressed & !keyBOMB_debounced) begin
         // Reset the flag once the initial button press is released
         first_enable_keyBOMB_pressed <= 0;
       end
@@ -264,7 +264,7 @@ module Map (
         bomb_en[1] <= 1;
         enemy_bombs_count <= enemy_bombs_count - 1;
       end
-      if (!empty && !busy) begin
+      if (!empty & !busy) begin
         readEn <= 1'b1;
         data = readData;
       end else begin
