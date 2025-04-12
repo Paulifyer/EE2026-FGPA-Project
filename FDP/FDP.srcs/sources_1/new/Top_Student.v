@@ -78,6 +78,7 @@ module Top_Student (
       clkOneSec
   );
 
+    wire is_game_in_progress;
   clock_generator_freq #(1000) c4 (
       clk,
       clk_1ms
@@ -149,7 +150,6 @@ module Top_Student (
       JB[6],
       JB[7]
   );
-    wire is_game_in_progress;
   Score_Tracker scoreTrack (
       clkOneSec,
       state,
