@@ -133,11 +133,13 @@ module Map (
       .wall_tiles(wall_tiles),
       .breakable_tiles(after_break_tiles),
       .explosion_display(explosion_display),
-      .powerup_tiles(powerup1_tiles),
-      .powerup_tiles(powerup2_tiles),
-      .powerup_tiles(powerup3_tiles),
-      .powerup_tiles(powerup4_tiles),
-      .powerup_tiles(powerup5_tiles),
+      .user_direction(user_move),
+      .bot_direction(bot_move_wire),
+      .powerup1_tiles(powerup1_tiles),
+      .powerup2_tiles(powerup2_tiles),
+      .powerup3_tiles(powerup3_tiles),
+      .powerup4_tiles(powerup4_tiles),
+      .powerup5_tiles(powerup5_tiles),
       .bomb_indices(bomb_indices),
       .bomb_en(bomb_en),
       .sel(sel),
@@ -266,20 +268,20 @@ module Map (
       //        player_bombs_count <= player_bombs_count - 1;
       //      end
       bomb_indices[20:0] <= bomb_tiles;
-      bomb_en[3:0] <= start_bomb[3:0];
+      bomb_en[2:0] <= start_bomb[2:0];
 
       // Handle enemy bomb placement
       if (dropBomb_enemy) begin
         // Set bomb at the correct index position based on enemy_bombs_count
         case (enemy_bombs_count)
           3: begin bomb_indices[27:21] <= bot_index;  
-              bomb_en[1] <= 1;
+              bomb_en[3] <= 1;
             end
           2: begin bomb_indices[34:28] <= bot_index;  
-              bomb_en[2] <= 1;
+              bomb_en[4] <= 1;
             end
           1: begin bomb_indices[41:35] <= bot_index;  
-              bomb_en[3] <= 1;
+              bomb_en[5] <= 1;
             end
           default: /* Do nothing if no bombs left */;
         endcase

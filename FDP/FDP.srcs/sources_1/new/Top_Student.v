@@ -177,11 +177,11 @@ module Top_Student (
       .bombs(led[15:13]),
       .health(led[3:0]),
       .breakable_tiles(breakable_tiles),
-      .powerup_tiles(powerup1_tiles),
-      .powerup_tiles(powerup2_tiles),
-      .powerup_tiles(powerup3_tiles),
-      .powerup_tiles(powerup4_tiles),
-      .powerup_tiles(powerup5_tiles),
+      .powerup1_tiles(powerup1_tiles),
+      .powerup2_tiles(powerup2_tiles),
+      .powerup3_tiles(powerup3_tiles),
+      .powerup4_tiles(powerup4_tiles),
+      .powerup5_tiles(powerup5_tiles),
       .pixel_data(oled_game_map)
   );
 

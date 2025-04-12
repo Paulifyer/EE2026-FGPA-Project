@@ -136,6 +136,7 @@ module bomb(
       if (bomb_dmg_once == 0 && explosion_display[player_index] == 1) begin
         bomb_dmg_once <= 1;
         after_player_health <= after_player_health >> 1;
+      end
       if (b_bomb_dmg_once == 0 && explosion_display[bot_index] == 1) begin
           b_bomb_dmg_once <= 1;
           after_bot_health <= after_bot_health >> 1;
@@ -153,16 +154,13 @@ module bomb(
       /* Determine which bomb exploded and remove it */
       if (explode_bomb[0]) begin
         bomb_index = position_bomb[0];
-        //                position_bomb[0] <= 127;
         start_bomb[0] <= 0;
       end else if (explode_bomb[1]) begin
         bomb_index = position_bomb[1];
-        //                position_bomb[1] <= 127;
         start_bomb[1] <= 0;
       end else if (explode_bomb[2]) begin
         bomb_index = position_bomb[2];
         start_bomb[2] <= 0;
-
       end else if (e_explode_bomb[0]) begin
         bomb_index = other_position_bomb[0];
         start_bomb[3] <= 0;
