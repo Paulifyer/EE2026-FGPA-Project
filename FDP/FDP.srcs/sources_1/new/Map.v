@@ -17,10 +17,10 @@ module Map (
     input [95:0] powerup_tiles,
     output [2:0] bombs,
     output [3:0] health,
-    output is_game_in_progress,
-    output [15:0] pixel_data,
-    output en
+    output [15:0] pixel_data
 );
+
+  wire en;
 
   // Parameters
   parameter TILE_SIZE = 8;  // Tile size in pixels

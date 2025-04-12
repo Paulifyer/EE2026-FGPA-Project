@@ -14,7 +14,11 @@ module StateManager (
 
   reg lastInput = 1'b0;
   always @(posedge clk) begin
-    if (keySELECT & ~lastInput)
+    if (~is_game_in_progress & state == GAME) begin
+      state = MENU;
+      lastInput = 1'b0;
+    end
+    else if (keySELECT & ~lastInput)
       if (state == MENU) state = SPRITE;
       else if (state == SPRITE) state = GAME;
     lastInput = keySELECT;

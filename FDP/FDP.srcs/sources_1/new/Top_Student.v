@@ -79,6 +79,7 @@ module Top_Student (
   );
 
     wire is_game_in_progress;
+    assign is_game_in_progress = (state == 4'b0010) & led[0];
   clock_generator_freq #(1000) c4 (
       clk,
       clk_1ms
@@ -157,7 +158,6 @@ module Top_Student (
       score,
       is_high_score
   );
-
   Map map (
       .clk(clk),
       .keyDOWN(keyDOWN),
@@ -173,7 +173,6 @@ module Top_Student (
       .JAout(JAout),
       .bombs(led[15:13]),
       .health(led[3:0]),
-      .en(is_game_in_progress),
       .breakable_tiles(breakable_tiles),
       .powerup_tiles(powerup_tiles),
       .pixel_data(oled_game_map)

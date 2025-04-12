@@ -9,33 +9,41 @@ module Score_Tracker(
     );
 
     reg [15:0] high_score;
+    reg prev_game_in_progress;
 
     initial begin
         score <= 0;
         high_score <= 30;
         is_high_score <= 0;
+        prev_game_in_progress <= 0;
     end
     
-    always @(posedge clk_1s)
-    begin
-        if (~is_game_in_progress) begin
+    always @(posedge clk_1s) begin
+        // Reset score only when a new game starts (rising edge on is_game_in_progress)
+        if (is_game_in_progress && !prev_game_in_progress) begin
             score <= 0;
+            is_high_score <= 0;
         end
-        else if (en == 2) begin
-            score <= score + 1;
-            
-            // Update high score when current score exceeds it
-            if (score + 1 > high_score) begin
-                high_score <= score + 1;
-                is_high_score <= 1;
+        else if (is_game_in_progress) begin
+            if (en == 2) begin
+                score <= score + 1;
+                
+                // Update high score when current score exceeds it
+                if (score + 1 > high_score) begin
+                    high_score <= score + 1;
+                    is_high_score <= 1;
+                end
+                else begin
+                    is_high_score <= 0;
+                end
             end
             else begin
                 is_high_score <= 0;
             end
         end
-        else begin
-            is_high_score <= 0;
-        end
+        
+        // Update previous game state for edge detection
+        prev_game_in_progress <= is_game_in_progress;
     end
 
 endmodule
