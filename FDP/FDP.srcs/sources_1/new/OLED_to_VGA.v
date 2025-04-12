@@ -4,12 +4,15 @@ module OLED_to_VGA (
     input clk,
     input [15:0] pixel_data,
     input [15:0] score,
+    input is_high_score,
     input [12:0] pixel_index,
     input [3:0] bombs,  // 4 bits representing up to 4 bombs (1111 = 4 bombs, 0111 = 3 bombs, etc.)
     output hsync,
-    vsync,
+    output vsync,
     output reg [11:0] rgb
 );
+
+  import sprites::*;
 
   // Border parameters
   parameter BORDER_WIDTH = 4;
@@ -17,7 +20,6 @@ module OLED_to_VGA (
   // Color constants
   parameter COLOUR_BLACK = 12'h000;
   parameter COLOUR_WHITE = 12'hFFF;
-  parameter BOMB_GREY = 16'ha554;
 
   wire video_on;
   wire [9:0] x;
@@ -56,21 +58,15 @@ module OLED_to_VGA (
   reg [12:0] buff_index_reg;
   // Register the output from frame buffer
   reg [12:0] frame_buff_data;
-  // Register display area flag
-  reg is_in_display_area_reg;
 
   always @(posedge clk) begin
-    buff_index_reg <= buff_index;
+    buff_index_reg  <= buff_index;
     frame_buff_data <= frame_buffer[buff_index_reg];
-    is_in_display_area_reg <= is_in_display_area;
   end
-
-  reg reset;
 
   // Instantiate the VGA controller
   vga_controller vga_c (
       .clk(clk),
-      .reset(reset),
       .hsync(hsync),
       .vsync(vsync),
       .video_on(video_on),
@@ -81,7 +77,7 @@ module OLED_to_VGA (
 
   // Separate write and read operations for the frame buffer
   always @(posedge clk) begin
-    // Write operation
+    // account for colour differences
     frame_buffer[pixel_index] <= {pixel_data[4:1], pixel_data[10:7], pixel_data[15:12]};
   end
 
@@ -101,8 +97,6 @@ module OLED_to_VGA (
   // Convert binary score to 4-digit BCD (assumes score < 10000)
   wire [3:0] digit0, digit1, digit2, digit3;
 
-
-
   // Instantiate the BCD converter module
   BcdConverter bcd_inst (
       .score (score),
@@ -115,63 +109,75 @@ module OLED_to_VGA (
   // Define score display parameters
   parameter SCORE_VOFFSET = 370;
   parameter SCORE_HOFFSET = 125;
-  wire is_in_score_area;
-  wire score_pixel_active;
+  wire [11:0] score_pixel_color;  // Changed to receive color from ScoreDisplay
+  wire in_score_region;
 
   // Define bomb display parameters
   parameter BOMB_VOFFSET = 400;
   parameter BOMB_HOFFSET = 125;
-  wire is_in_bomb_area;
   wire bomb_pixel_active;
+
+  // Define health display parameters
+  parameter HEALTH_VOFFSET = 440;
+  parameter HEALTH_HOFFSET = 125;
+  wire health_pixel_active;
+
+  wire [3:0] player_health = 4'b0111;
 
   // Instantiate the score module with custom offsets:
   ScoreDisplay #(
       .SCORE_VOFFSET(SCORE_VOFFSET),
       .SCORE_HOFFSET(SCORE_HOFFSET)
   ) score_inst (
-      .clk            (clk),
-      .x_in           (x),
-      .y_in           (y),
-      .s0             (digit0),
-      .s1             (digit1),
-      .s2             (digit2),
-      .s3             (digit3),
-      .in_score_region(is_in_score_area),
-      .pixel_on       (score_pixel_active)
+      .clk     (clk),
+      .x_in    (x),
+      .y_in    (y),
+      .s0      (digit0),
+      .s1      (digit1),
+      .s2      (digit2),
+      .s3      (digit3),
+      .is_high_score(is_high_score),
+      .in_score_region(in_score_region),
+      .pixel_color(score_pixel_color)  // Get color directly from ScoreDisplay
   );
 
-  // Instantiate the bomb display module
-  BombDisplay #(
-      .BOMB_VOFFSET(BOMB_VOFFSET),
-      .BOMB_HOFFSET(BOMB_HOFFSET)
+  // Instantiate the sprite display module for bombs
+  SpriteCountDisplay #(
+      .SPRITE_VOFFSET(BOMB_VOFFSET),
+      .SPRITE_HOFFSET(BOMB_HOFFSET)
   ) bomb_inst (
       .clk(clk),
       .x_in(x),
       .y_in(y),
-      .bombs(bombs),
-      .in_bomb_region(is_in_bomb_area),
+      .count(bombs),
+      .sprite_data(BOMB_SPRITE_DATA),  // Pass the bomb sprite data to the display module
       .pixel_on(bomb_pixel_active)
   );
 
-  // // Instantiate the health display module
-  // HealthDisplay #(
-  //     .HEALTH_VOFFSET(HEALTH_VOFFSET),
-  //     .HEALTH_HOFFSET(HEALTH_HOFFSET)
-  // ) health_inst (
-  //     .clk(clk),
-  //     .x_in(x),
-  //     .y_in(y),
-  //     .health(player_health),
-  //     .in_health_region(is_in_health_area),
-  //     .pixel_on(health_pixel_active)
-  // );
+  // Instantiate the sprite display module for health
+  SpriteCountDisplay #(
+      .SPRITE_VOFFSET(HEALTH_VOFFSET),
+      .SPRITE_HOFFSET(HEALTH_HOFFSET)
+  ) health_inst (
+      .clk(clk),
+      .x_in(x),
+      .y_in(y),
+      .count(player_health),
+      .sprite_data(HEART_SPRITE_DATA),
+      .pixel_on(health_pixel_active)
+  );
+
+  // Convert OLED 16-bit colors to VGA 12-bit format using same conversion as frame buffer
+  wire [11:0] converted_bomb_color = {BOMB_GREY[4:1], BOMB_GREY[10:7], BOMB_GREY[15:12]};
+  wire [11:0] converted_heart_color = {HEART_RED[4:1], HEART_RED[10:7], HEART_RED[15:12]};
 
   always @(posedge clk) begin
     if (~video_on) rgb <= COLOUR_BLACK;
-    else if (is_in_display_area_reg) rgb <= frame_buff_data;  // Use registered data
+    else if (is_in_display_area) rgb <= frame_buff_data;
     else if (is_in_border) rgb <= COLOUR_WHITE;
-    else if (score_pixel_active) rgb <= COLOUR_WHITE;
-    else if (bomb_pixel_active) rgb <= COLOUR_WHITE;
+    else if (in_score_region) rgb <= score_pixel_color; // Use color from ScoreDisplay directly
+    else if (bomb_pixel_active) rgb <= converted_bomb_color;
+    else if (health_pixel_active) rgb <= converted_heart_color;
     else rgb <= COLOUR_BLACK;
   end
 

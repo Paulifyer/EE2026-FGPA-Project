@@ -9,6 +9,7 @@ module enemy_movement (
     input [1:0] bomb_en,
     input [95:0] wall_tiles,
     input [95:0] breakable_tiles,
+    input [95:0] powerup_tiles,
     input [15:0] random_number,
     output reg dropBomb,
     output reg [2:0] direction
@@ -34,8 +35,8 @@ module enemy_movement (
   // State registers
   reg [2:0] current_state = IDLE;
   reg [2:0] next_state = IDLE;
+  
   // Counters
-  reg [5:0] patrol_counter = 0;
   reg [1:0] patrol_after_flee_counter = 0;  // Counter to track PATROLLING cycles after FLEEING
 
   // Position and movement tracking
@@ -84,6 +85,51 @@ module enemy_movement (
       is_in_bomb_line = (bomb_en[0] && (test_x == bomb_X[0] || test_y == bomb_Y[0])) || 
                          (bomb_en[1] && (test_x == bomb_X[1] || test_y == bomb_Y[1]));
     end
+  endfunction
+
+    function is_clear_path;
+      input [3:0] start_x, start_y;
+      input [3:0] end_x, end_y;
+      integer i;
+      reg [3:0] min, max;
+      begin
+          if (start_y == end_y) begin // horizontal line-of-sight
+              if (start_x < end_x) begin
+                  min = start_x;
+                  max = end_x;
+              end else begin
+                  min = end_x;
+                  max = start_x;
+              end
+              is_clear_path = 1;
+              // Fixed loop from 0 to 15
+              for (i = 0; i < 16; i = i + 1) begin
+                  if ((i > min) && (i < max)) begin
+                      if (is_collision(i, start_y))
+                          is_clear_path = 0;
+                  end
+              end
+          end else if (start_x == end_x) begin // vertical line-of-sight
+              if (start_y < end_y) begin
+                  min = start_y;
+                  max = end_y;
+              end else begin
+                  min = end_y;
+                  max = start_y;
+              end
+              is_clear_path = 1;
+              // Fixed loop from 0 to 15
+              for (i = 0; i < 16; i = i + 1) begin
+                  if ((i > min) && (i < max)) begin
+                      if (is_collision(start_x, i))
+                          is_clear_path = 0;
+                  end
+              end
+          end else begin
+              // Not aligned horizontally or vertically.
+              is_clear_path = 0;
+          end
+      end
   endfunction
 
   // Helper function to check if a move is safe (no collision, no bomb, and within map boundaries)
@@ -137,12 +183,6 @@ module enemy_movement (
         patrol_after_flee_counter <= patrol_after_flee_counter - 1;
       end
 
-      // Update patrol counter
-      if (current_state == PATROLLING) begin
-        patrol_counter <= patrol_counter + 1;
-        if (patrol_counter >= 30) patrol_counter <= 0;
-      end
-
       // Determine movement based on state
       case (current_state)
         IDLE: direction <= NO_MOVE;
@@ -166,90 +206,95 @@ module enemy_movement (
     end
   end
 
-  // Handle patrol movement logic
+  // Modified task handle_patrol_movement to set NO_MOVE if everywhere is unsafe
   task handle_patrol_movement;
     reg [3:0] dir_order;
     reg safe_up, safe_right, safe_down, safe_left;
     begin
       // Check which directions are safe
-      safe_up = is_safe_move(botX, botY - 1);
+      safe_up    = is_safe_move(botX, botY - 1);
       safe_right = is_safe_move(botX + 1, botY);
-      safe_down = is_safe_move(botX, botY + 1);
-      safe_left = is_safe_move(botX - 1, botY);
-
-      // Use random number to determine direction selection pattern
-      case (random_number[2:0])
-        0: begin  // Check UP -> RIGHT -> DOWN -> LEFT
-          if (safe_up) direction <= UP;
-          else if (safe_right) direction <= RIGHT;
-          else if (safe_down) direction <= DOWN;
-          else if (safe_left) direction <= LEFT;
-          else direction <= NO_MOVE;
-        end
-
-        1: begin  // Check RIGHT -> DOWN -> LEFT -> UP
-          if (safe_right) direction <= RIGHT;
-          else if (safe_down) direction <= DOWN;
-          else if (safe_left) direction <= LEFT;
-          else if (safe_up) direction <= UP;
-          else direction <= NO_MOVE;
-        end
-
-        2: begin  // Check DOWN -> LEFT -> UP -> RIGHT
-          if (safe_down) direction <= DOWN;
-          else if (safe_left) direction <= LEFT;
-          else if (safe_up) direction <= UP;
-          else if (safe_right) direction <= RIGHT;
-          else direction <= NO_MOVE;
-        end
-
-        3: begin  // Check LEFT -> UP -> RIGHT -> DOWN
-          if (safe_left) direction <= LEFT;
-          else if (safe_up) direction <= UP;
-          else if (safe_right) direction <= RIGHT;
-          else if (safe_down) direction <= DOWN;
-          else direction <= NO_MOVE;
-        end
-
-        4: begin  // Check UP -> LEFT -> DOWN -> RIGHT
-          if (safe_up) direction <= UP;
-          else if (safe_left) direction <= LEFT;
-          else if (safe_down) direction <= DOWN;
-          else if (safe_right) direction <= RIGHT;
-          else direction <= NO_MOVE;
-        end
-
-        5: begin  // Check DOWN -> RIGHT -> UP -> LEFT
-          if (safe_down) direction <= DOWN;
-          else if (safe_right) direction <= RIGHT;
-          else if (safe_up) direction <= UP;
-          else if (safe_left) direction <= LEFT;
-          else direction <= NO_MOVE;
-        end
-
-        default: begin  // Random selection based on more bits
-          if (random_number[3]) begin
-            if (random_number[4] ? safe_up : safe_down) direction <= random_number[4] ? UP : DOWN;
-            else if (random_number[5] ? safe_left : safe_right)
-              direction <= random_number[5] ? LEFT : RIGHT;
-            else if (random_number[4] ? safe_down : safe_up)
-              direction <= random_number[4] ? DOWN : UP;
-            else if (random_number[5] ? safe_right : safe_left)
-              direction <= random_number[5] ? RIGHT : LEFT;
-            else direction <= NO_MOVE;
-          end else begin
-            if (random_number[6] ? safe_left : safe_right)
-              direction <= random_number[6] ? LEFT : RIGHT;
-            else if (random_number[7] ? safe_up : safe_down)
-              direction <= random_number[7] ? UP : DOWN;
-            else if (random_number[6] ? safe_right : safe_left)
-              direction <= random_number[6] ? RIGHT : LEFT;
-            else if (random_number[7] ? safe_down : safe_up)
-              direction <= random_number[7] ? DOWN : UP;
+      safe_down  = is_safe_move(botX, botY + 1);
+      safe_left  = is_safe_move(botX - 1, botY);
+      
+      // If all directions are unsafe, set direction to NO_MOVE
+      if (~safe_up && ~safe_right && ~safe_down && ~safe_left) begin
+        direction <= NO_MOVE;
+      end else begin
+        // Use random number to determine direction selection pattern
+        case (random_number[2:0])
+          0: begin  // Check UP -> RIGHT -> DOWN -> LEFT
+            if (safe_up) direction <= UP;
+            else if (safe_right) direction <= RIGHT;
+            else if (safe_down) direction <= DOWN;
+            else if (safe_left) direction <= LEFT;
             else direction <= NO_MOVE;
           end
-        end
-      endcase
+
+          1: begin  // Check RIGHT -> DOWN -> LEFT -> UP
+            if (safe_right) direction <= RIGHT;
+            else if (safe_down) direction <= DOWN;
+            else if (safe_left) direction <= LEFT;
+            else if (safe_up) direction <= UP;
+            else direction <= NO_MOVE;
+          end
+
+          2: begin  // Check DOWN -> LEFT -> UP -> RIGHT
+            if (safe_down) direction <= DOWN;
+            else if (safe_left) direction <= LEFT;
+            else if (safe_up) direction <= UP;
+            else if (safe_right) direction <= RIGHT;
+            else direction <= NO_MOVE;
+          end
+
+          3: begin  // Check LEFT -> UP -> RIGHT -> DOWN
+            if (safe_left) direction <= LEFT;
+            else if (safe_up) direction <= UP;
+            else if (safe_right) direction <= RIGHT;
+            else if (safe_down) direction <= DOWN;
+            else direction <= NO_MOVE;
+          end
+
+          4: begin  // Check UP -> LEFT -> DOWN -> RIGHT
+            if (safe_up) direction <= UP;
+            else if (safe_left) direction <= LEFT;
+            else if (safe_down) direction <= DOWN;
+            else if (safe_right) direction <= RIGHT;
+            else direction <= NO_MOVE;
+          end
+
+          5: begin  // Check DOWN -> RIGHT -> UP -> LEFT
+            if (safe_down) direction <= DOWN;
+            else if (safe_right) direction <= RIGHT;
+            else if (safe_up) direction <= UP;
+            else if (safe_left) direction <= LEFT;
+            else direction <= NO_MOVE;
+          end
+
+          default: begin  // Random selection based on more bits
+            if (random_number[3]) begin
+              if (random_number[4] ? safe_up : safe_down) direction <= random_number[4] ? UP : DOWN;
+              else if (random_number[5] ? safe_left : safe_right)
+                direction <= random_number[5] ? LEFT : RIGHT;
+              else if (random_number[4] ? safe_down : safe_up)
+                direction <= random_number[4] ? DOWN : UP;
+              else if (random_number[5] ? safe_right : safe_left)
+                direction <= random_number[5] ? RIGHT : LEFT;
+              else direction <= NO_MOVE;
+            end else begin
+              if (random_number[6] ? safe_left : safe_right)
+                direction <= random_number[6] ? LEFT : RIGHT;
+              else if (random_number[7] ? safe_up : safe_down)
+                direction <= random_number[7] ? UP : DOWN;
+              else if (random_number[6] ? safe_right : safe_left)
+                direction <= random_number[6] ? RIGHT : LEFT;
+              else if (random_number[7] ? safe_down : safe_up)
+                direction <= random_number[7] ? DOWN : UP;
+              else direction <= NO_MOVE;
+            end
+          end
+        endcase
+      end
     end
   endtask
 
@@ -366,12 +411,13 @@ module enemy_movement (
 
   // Handle bomb dropping logic
   task handle_bomb_dropping;
-
     begin
-      // Drop bomb if in the same row or column as the user and not already in a bomb line
-      dropBomb <= ((new_botX == userX || new_botY == userY) && 
-                  random_number[3:0] < 4'b0100) && 
-                  (~is_in_bomb_line(new_botX, new_botY));
+      // Only drop bomb if aligned with the user, the random condition passes,
+      // the path is clear of walls/breakable tiles, and the bot isn't already in a bomb line.
+      dropBomb <= ((new_botX == userX || new_botY == userY) &
+                   (random_number[3:0] < 4'b1000) &
+                   is_clear_path(new_botX, new_botY, userX, userY)) &
+                   (~is_in_bomb_line(new_botX, new_botY));
     end
   endtask
 

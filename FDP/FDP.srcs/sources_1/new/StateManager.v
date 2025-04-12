@@ -1,7 +1,7 @@
 `timescale 1ns / 1ps
 
 module StateManager(
-    input btnC,
+    input keyBOMB,
     input clk,
     output reg [3:0] state = 4'b0
     );
@@ -13,10 +13,10 @@ module StateManager(
     
     reg lastInput = 1'b0;
        always @ (posedge clk) begin
-           if (btnC & ~lastInput) begin
-              if (state == MENU) state = SPRITE;
-              else if (state == SPRITE) state = GAME;
-           end
-           lastInput = btnC;
+           if (keyBOMB & ~lastInput)
+             if (state == MENU) state = SPRITE;
+             else if (state == SPRITE) state = GAME;
+              state = 1'b1;
+           lastInput = keyBOMB;
        end
 endmodule

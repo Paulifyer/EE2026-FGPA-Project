@@ -12,7 +12,7 @@ module SpriteCountDisplay #(
     output reg in_sprite_region,
     output reg pixel_on
 );
-    
+    import sprites::*;
     
     // Display parameters
     parameter SPRITE_SIZE = 8;       // 8x8 sprite

@@ -6,6 +6,7 @@ module drawCordinate (
     input [6:0] bot_index,
     input [95:0] wall_tiles,
     input [95:0] breakable_tiles,
+    input [95:0] powerup_tiles,
     input [13:0] bomb_indices,
     input [1:0] bomb_en,
     input [1:0] sel, //sprite selection
@@ -43,22 +44,54 @@ module drawCordinate (
 
   wire isWall = wall_tiles[tileIndex];
   wire isBreakable = breakable_tiles[tileIndex];
+  wire isPowerup = powerup_tiles[tileIndex];
   
   wire [5:0] tilePixelIndex = localY * TILE_WIDTH + localX;
   
   // Determine active sprite pixel for wall and breakable using sprites data.
   wire wallActive = isWall && (WALL_SPRITE_DATA[tilePixelIndex]);
   wire brickActive = isBreakable && (BRICK_SPRITE_DATA[tilePixelIndex]);
+  wire powerupActive = isPowerup && (POWERUP_BOMBUP_SPRITE_DATA[tilePixelIndex]);
   
   // Extract bomb indices directly from the input
   wire [6:0] bomb_index_1 = bomb_indices[6:0];
   wire [6:0] bomb_index_2 = bomb_indices[13:7];
+  
+//  reg userFaceDirection;
+//  reg botFaceDirection;
 
   parameter BLACK_COLOUR = 16'h0000;  // Black
 
+//  // Assign direction of user and bot based on inputs: left and up faces left, right and down faces right
+//      // Process movement based on direction
+//      case (userFaceDirection)
+////        1: userFaceDirection <= CAT_SPRITE_LEFT_DATA;                  // UP
+////        2: userFaceDirection <= CAT_SPRITE_RIGHT_DATA;                 // RIGHT
+////        3: userFaceDirection <= CAT_SPRITE_RIGHT_DATA;                  // DOWN
+////        4: userFaceDirection <= CAT_SPRITE_LEFT_DATA;                  // LEFT
+//        default: begin
+////          userFaceDirection = CAT_SPRITE_LEFT_DATA;
+//        end
+//      endcase
+
+//    if (en) begin
+//      // Process movement based on direction
+//      case (direction)
+//        1: y_new = (y_cur > 0) ? y_cur - 1 : y_cur;                  // UP
+//        2: x_new = (x_cur < GRID_WIDTH - 1) ? x_cur + 1 : x_cur;     // RIGHT
+//        3: y_new = (y_cur < GRID_HEIGHT - 1) ? y_cur + 1 : y_cur;    // DOWN
+//        4: x_new = (x_cur > 0) ? x_cur - 1 : x_cur;                  // LEFT
+//        default: begin
+//          // No movement
+//        end
+//      endcase
+//    end
+                        
   // Assign color based on tile type: bomb has highest priority.
   assign objectColour = ~wallActive & isWall ? WALL_COLOUR : 
-                        (~brickActive & isBreakable ? BRICK_COLOUR : BLACK_COLOUR);
+                        ~brickActive & isBreakable ? BRICK_COLOUR : 
+                        ~powerupActive & isPowerup ? POWERUP_BACKGROUND_GREEN : 
+                        BLACK_COLOUR;
 
   //To let users choose which sprite to play with
   reg [63:0] spriteData [2:0];

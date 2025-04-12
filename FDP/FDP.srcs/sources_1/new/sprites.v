@@ -175,54 +175,90 @@ package sprites;
   
   // Powerup: Bombup sprite data
   parameter POWERUP_BOMBUP_SPRITE_DATA = {  // POWERUP FOR BOMBUP
-      8'b00000000,
-      8'b00001100,
-      8'b00010000,
+      8'b00111000, //INVERTED TEMP FIX
+      8'b01111100,
+      8'b01111100,
+      8'b01111100,
       8'b00111000,
-      8'b01111100,
-      8'b01111100,
-      8'b01111100,
-      8'b00111000
+      8'b00010000,
+      8'b00001100,
+      8'b00000000
+  
+//      8'b00000000, // ORIGINAL
+//      8'b00001100,
+//      8'b00010000,
+//      8'b00111000,
+//      8'b01111100,
+//      8'b01111100,
+//      8'b01111100,
+//      8'b00111000
   };
   parameter POWERUP_BACKGROUND_GREEN = 16'h5660;
   parameter POWERUP_BOMBUP_GREY = 16'ha554;    
   
   // Powerup: Push sprite data
   parameter POWERUP_PUSH_SPRITE_DATA = {  // POWERUP FOR PUSH ABILITY
-      8'b00011000,
-      8'b00011001,
+      8'b11001100, // INVERTED TEMP FIX
+      8'b10001000,
+      8'b01001001,
       8'b01110001,
       8'b01111111,
       8'b01110001,
-      8'b01001001,
-      8'b10001000,
-      8'b11001100
+      8'b00011001,
+      8'b00011000
+
+//      8'b00011000, // ORIGINAL
+//      8'b00011001,
+//      8'b01110001,
+//      8'b01111111,
+//      8'b01110001,
+//      8'b01001001,
+//      8'b10001000,
+//      8'b11001100
   };
   parameter POWERUP_PUSH_PURPLE = 16'h7014;   
   
   // Powerup: Healthup sprite data
   parameter POWERUP_HEALTHUP_SPRITE_DATA = {  // POWERUP FOR HEALTHUP
-      8'b01100110,
-      8'b11111111,
-      8'b11111111,
-      8'b11111111,
-      8'b11111111,
-      8'b01111110,
+      8'b00011000, // INVERTED TEMP FIX
       8'b00111100,
-      8'b00011000
+      8'b01111110,
+      8'b11111111,
+      8'b11111111,
+      8'b11111111,
+      8'b11100111,
+      8'b01100110
+  
+//      8'b01100110, // ORIGINAL
+//      8'b11111111,
+//      8'b11111111,
+//      8'b11111111,
+//      8'b11111111,
+//      8'b01111110,
+//      8'b00111100,
+//      8'b00011000
   }; 
   parameter POWERUP_HEALTH_RED = 16'hd0e4; 
   
   // Powerup: Reducetimer sprite data
   parameter POWERUP_REDUCETIMER_SPRITE_DATA = {  // POWERUP FOR REDUCETIMER
-      8'b00000000,
-      8'b00111110,
+      8'b00001110, // INVERTED TEMP FIX
       8'b00100010,
-      8'b00100010,
-      8'b11111010,
       8'b01110010,
+      8'b11111010,
       8'b00100010,
-      8'b00001110
+      8'b00100010,
+      8'b00111110,
+      8'b00000000
+      
+//      8'b00000000, // ORIGINAL
+//      8'b00111110,
+//      8'b00100010,
+//      8'b00100010,
+//      8'b11111010,
+//      8'b01110010,
+//      8'b00100010,
+//      8'b00001110
   };   
   parameter POWERUP_REDUCETIME_WHITE = 16'hffff;    
   
