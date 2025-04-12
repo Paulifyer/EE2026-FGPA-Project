@@ -32,7 +32,7 @@ module ScoreDisplay #(
   // High score effects
   reg [3:0] highlight_counter = 0;
   reg [23:0] effect_timer = 0;
-  parameter EFFECT_SPEED = 24'd10000000;  // Controls speed of the highlight effect
+  parameter EFFECT_SPEED = 24'd5000000;  // Controls speed of the highlight effect
   
   // Pre-calculate constants for efficiency
   localparam EFFECTIVE_CHAR_WIDTH = CHAR_WIDTH << SCORE_SCALE_2N;
