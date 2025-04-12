@@ -17,45 +17,88 @@ module bomb(
     output reg [95:0] explosion_display,
     output [20:0] position_bomb_o,
     output reg [3:0] after_player_health,
-    output reg [5:0] start_bomb = 0 /* To enable countdown for bomb */
-    );
-    
-    wire clk_1ms;//, btnC_state;
-    reg [6:0] position_bomb[2:0] = '{7'd127, 7'd127, 7'd127}; /* If bomb is not in used, it is place outside the map */
-    reg [6:0] other_position_bomb[2:0] = '{7'd127, 7'd127, 7'd127};
-    reg [6:0] bomb_index, /* Single bomb index to calculate bomb explosion range in breakable tiles */
-              bomb_offset, /* For pushing bomb */
-              previous_player_index = player_index;
-    wire [2:0] explode_bomb, e_explode_bomb; /* Signal bomb exploded */
-    reg [25:0] explosion_display_count = 0;
-    reg bomb_dmg_once = 0;
-    /* Reg to store calculation */
-    reg player_not_on_bomb;
-    reg [3:0] bomb_index_y;
-    reg [6:0] explode_up[2:0]; reg [6:0] explode_left[2:0]; reg [6:0] explode_right[2:0]; reg [6:0] explode_down[2:0];
-    reg [3:0] explode_left_constraint, explode_right_constraint;
-    reg [6:0] bomb_indices[2:0]; reg [5:0] bomb_indices_x[2:0];
-    reg [2:0] bomb_wall_collision, bomb_screen_collision, bomb_constraint;
-    
-    slow_clock c0 (clk, 100000, clk_1ms);
-    time_bomb_explosion t0 (clk_1ms, start_bomb[0], bomb_time, explode_bomb[0]);
-    time_bomb_explosion t1 (clk_1ms, start_bomb[1], bomb_time, explode_bomb[1]);
-    time_bomb_explosion t2 (clk_1ms, start_bomb[2], bomb_time, explode_bomb[2]);
-    time_bomb_explosion t3 (clk_1ms, start_bomb[3], bomb_time, e_explode_bomb[0]);
-    time_bomb_explosion t4 (clk_1ms, start_bomb[4], bomb_time, e_explode_bomb[1]);
-    time_bomb_explosion t5 (clk_1ms, start_bomb[5], bomb_time, e_explode_bomb[2]);
-//    switch_debounce d1 (clk, 200, btnC, btnC_state); /* Prevent multiple placment of bomb*/
-    
-    assign position_bomb_o = {7'(position_bomb[2]),7'(position_bomb[1]),7'(position_bomb[0])};
-    
-    always @ (posedge clk) begin
-        previous_player_index <= player_index; /* Store previous player index for pushing bomb */
-        if (!en) begin
-            after_break_tiles <= breakable_tiles;
-            after_player_health <= player_health;
-        end
-        else if (btnC_state) begin
-            /* Place the bombs under the player index if:
+                     after_bot_health,
+    output reg [5:0] start_bomb = 0  /* To enable countdown for bomb */
+);
+
+  wire clk_1ms;  //, btnC_state;
+  reg [6:0] position_bomb[2:0] = '{
+      7'd127,
+      7'd127,
+      7'd127
+  };  /* If bomb is not in used, it is place outside the map */
+  reg [6:0] other_position_bomb[2:0] = '{7'd127, 7'd127, 7'd127};
+  reg [6:0]
+      bomb_index,  /* Single bomb index to calculate bomb explosion range in breakable tiles */
+      bomb_offset,  /* For pushing bomb */
+      previous_player_index = player_index;
+  wire [2:0] explode_bomb, e_explode_bomb;  /* Signal bomb exploded */
+  reg [25:0] explosion_display_count = 0;
+  reg bomb_dmg_once = 0, b_bomb_dmg_once = 0;
+  /* Reg to store calculation */
+  reg player_not_on_bomb;
+  reg [3:0] bomb_index_y;
+  reg [6:0] explode_up[2:0];
+  reg [6:0] explode_left[2:0];
+  reg [6:0] explode_right[2:0];
+  reg [6:0] explode_down[2:0];
+  reg [3:0] explode_left_constraint, explode_right_constraint;
+  reg [6:0] bomb_indices  [2:0];
+  reg [5:0] bomb_indices_x[2:0];
+  reg [2:0] bomb_wall_collision, bomb_screen_collision, bomb_constraint;
+
+  slow_clock c0 (
+      clk,
+      100000,
+      clk_1ms
+  );
+  time_bomb_explosion t0 (
+      clk_1ms,
+      start_bomb[0],
+      bomb_time,
+      explode_bomb[0]
+  );
+  time_bomb_explosion t1 (
+      clk_1ms,
+      start_bomb[1],
+      bomb_time,
+      explode_bomb[1]
+  );
+  time_bomb_explosion t2 (
+      clk_1ms,
+      start_bomb[2],
+      bomb_time,
+      explode_bomb[2]
+  );
+  time_bomb_explosion t3 (
+      clk_1ms,
+      start_bomb[3],
+      bomb_time,
+      e_explode_bomb[0]
+  );
+  time_bomb_explosion t4 (
+      clk_1ms,
+      start_bomb[4],
+      bomb_time,
+      e_explode_bomb[1]
+  );
+  time_bomb_explosion t5 (
+      clk_1ms,
+      start_bomb[5],
+      bomb_time,
+      e_explode_bomb[2]
+  );
+  //    switch_debounce d1 (clk, 200, btnC, btnC_state); /* Prevent multiple placment of bomb*/
+
+  assign position_bomb_o = {7'(position_bomb[2]), 7'(position_bomb[1]), 7'(position_bomb[0])};
+
+  always @(posedge clk) begin
+    previous_player_index <= player_index;  /* Store previous player index for pushing bomb */
+    if (!en) begin
+      after_break_tiles   <= breakable_tiles;
+      after_player_health <= player_health;
+    end else if (btnC_state) begin
+      /* Place the bombs under the player index if:
                - It is not in used (ouside of the map)
                - Not occupy by other bombs
                - Within number of bomb placed (Maximum limited to 3 bombs simultaneously)
@@ -93,6 +136,7 @@ module bomb(
       if (bomb_dmg_once == 0 && explosion_display[player_index] == 1) begin
         bomb_dmg_once <= 1;
         after_player_health <= after_player_health >> 1;
+      end
       if (b_bomb_dmg_once == 0 && explosion_display[bot_index] == 1) begin
           b_bomb_dmg_once <= 1;
           after_bot_health <= after_bot_health >> 1;
@@ -110,16 +154,13 @@ module bomb(
       /* Determine which bomb exploded and remove it */
       if (explode_bomb[0]) begin
         bomb_index = position_bomb[0];
-        //                position_bomb[0] <= 127;
         start_bomb[0] <= 0;
       end else if (explode_bomb[1]) begin
         bomb_index = position_bomb[1];
-        //                position_bomb[1] <= 127;
         start_bomb[1] <= 0;
       end else if (explode_bomb[2]) begin
         bomb_index = position_bomb[2];
         start_bomb[2] <= 0;
-
       end else if (e_explode_bomb[0]) begin
         bomb_index = other_position_bomb[0];
         start_bomb[3] <= 0;
