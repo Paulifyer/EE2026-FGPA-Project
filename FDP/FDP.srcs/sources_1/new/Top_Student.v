@@ -27,7 +27,8 @@ module Top_Student (
     output [15:0] led,
     output [3:0] an,
     output hsync,
-    output vsync, JAout
+    output vsync, JAout,
+    output speaker
 );
 
   import Data_Item::*;
@@ -81,6 +82,13 @@ module Top_Student (
   clock_generator_freq #(1000) c4 (
       clk,
       clk_1ms
+  );
+
+  song_top sound (
+      clk,
+      keyBOMB, keyUP, keyLEFT, keyRIGHT, keyDOWN,
+//      explosion,
+      speaker
   );
 
   keyboard k1 (
