@@ -321,11 +321,7 @@ module Map (
   end
 
   // Bomb count indicator for LEDs
-  assign bombs = player_bombs_count == 4 ? 4'b1111 : 
-                 player_bombs_count == 3 ? 4'b1110 : 
-                 player_bombs_count == 2 ? 4'b1100 : 
-                 player_bombs_count == 1 ? 4'b1000 : 
-                 4'b0000;
+  assign bombs = ~((((3'b111 >> start_bomb[2]) >> start_bomb[1]) >> start_bomb[0]));
 
 //  assign health = 4'b0111;
 
