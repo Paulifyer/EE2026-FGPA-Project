@@ -83,17 +83,17 @@ module bomb(
         end
         if (explosion_display_count > 0) begin
             explosion_display_count <= explosion_display_count + (explosion_display_count < 50000000);
-//            if (explosion_display_count == 50000000-1)
-            if (explosion_display_count == 50000000) begin
+            if (bomb_dmg_once == 0 && explosion_display[player_index] == 1) begin
+                bomb_dmg_once <= 1;
+                after_player_health <= after_player_health >> 1;
+            end
+            else if (explosion_display_count == 50000000) begin
                 explosion_display <= 0;
                 explosion_display_count <= 0;
                 bomb_dmg_once <= 0;
                 position_bomb[0] <= start_bomb[0] ? position_bomb[0] : 127;
                 position_bomb[1] <= start_bomb[1] ? position_bomb[1] : 127;
             end
-            if (explosion_display[player_index] == 1 && !bomb_dmg_once)
-                bomb_dmg_once <= 1;
-                after_player_health <= after_player_health >> 1;
         end
         else if (explode_bomb || e_explode_bomb) begin
             explosion_display_count <= 1;
