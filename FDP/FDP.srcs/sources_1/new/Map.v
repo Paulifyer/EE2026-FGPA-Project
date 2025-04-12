@@ -67,15 +67,15 @@ module Map (
 
   wire en;  //enable wire
 
+    reg [95:0] after_powerup_tiles;
     wire [13:0] bomb_tiles;
-    wire [95:0] after_break_tiles, explosion_display, pu_push;
+    wire [95:0] after_break_tiles, explosion_display;
     reg [2:0] bomb_limit = 1, bomb_range = 2;
     reg [13:0] bomb_time = 10000;
-    reg [2:0] player_health = 3'b111;
-    wire [2:0] new_player_health;
+    reg [3:0] player_health = 4'b1111;
     wire [3:0] start_bomb;
     reg push_bomb_ability = 0;
-    bomb boom (clk,keyBOMB_posedge,en,push_bomb_ability,wall_tiles,breakable_tiles,bomb_indices[13:7],user_index,player_health,bomb_limit,bomb_range,bomb_time,after_break_tiles,explosion_display,bomb_tiles,new_player_health,start_bomb);
+    bomb boom (clk,keyBOMB_posedge,en,push_bomb_ability,wall_tiles,breakable_tiles,bomb_indices[13:7],user_index,player_health,bomb_limit,bomb_range,bomb_time,after_break_tiles,explosion_display,bomb_tiles,health,start_bomb);
 
   // Clock Divider for game timing
   slow_clock c1 (
@@ -124,7 +124,7 @@ module Map (
       .wall_tiles(wall_tiles),
       .breakable_tiles(after_break_tiles),
       .explosion_display(explosion_display),
-      .powerup_tiles(powerup_tiles),
+      .powerup_tiles(after_powerup_tiles),
       .user_direction(user_move),
       .bot_direction(bot_move_wire),
       .bomb_indices(bomb_indices),
@@ -278,13 +278,16 @@ module Map (
       if (bomb_countdown_enemy == 0) bomb_en[1] <= 0;
       
         // Player get push powerup
-        if (pu_push[user_index] == 1'b1)
-            push_bomb_ability = 1;
+        if (after_powerup_tiles[user_index] == 1) begin
+            push_bomb_ability <= 1;
+            after_powerup_tiles[user_index] <= 0;
+        end
         
     end else begin
       // Reset the enabled state when the module is disabled
       module_was_enabled <= 0;
       first_enable_keyBOMB_pressed <= 0;
+      after_powerup_tiles <= powerup_tiles;
     end
   end
 
@@ -315,6 +318,6 @@ module Map (
                  player_bombs_count == 1 ? 4'b1000 : 
                  4'b0000;
 
-  assign health = 4'b0111;
+//  assign health = 4'b0111;
 
 endmodule
