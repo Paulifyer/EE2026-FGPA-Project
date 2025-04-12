@@ -56,6 +56,7 @@ module drawCordinate (
   wire wallActive = isWall && (WALL_SPRITE_DATA[tilePixelIndex]);
   wire brickActive = isBreakable && (BRICK_SPRITE_DATA[tilePixelIndex]);
   wire powerupActive = isPowerup && (POWERUP_BOMBUP_SPRITE_DATA[tilePixelIndex]);
+  wire explodeActive = exploded && (EXPLOSION_TRAIL_SPRITE_DATA[tilePixelIndex]);
   
   // Extract bomb indices directly from the input
   wire [6:0] bomb_index_1 = bomb_indices[6:0];
@@ -67,7 +68,7 @@ module drawCordinate (
   assign objectColour = ~wallActive & isWall ? WALL_COLOUR : 
                         ~brickActive & isBreakable ? BRICK_COLOUR : 
                         ~powerupActive & isPowerup ? POWERUP_BACKGROUND_GREEN : 
-                         (exploded ? 16'h2945 : BLACK_COLOUR);
+                        ~explodeActive & exploded ? EXPLOSION_ORANGE : BLACK_COLOUR;
 
   //To let users choose which sprite to play with
   reg [63:0] spriteDataLeft [2:0];
@@ -104,7 +105,7 @@ module drawCordinate (
 
   drawSquare #(8) bombSquare_1 (
       .tile_index(bomb_index_1),
-      .colour(BOMB_GREY),
+      .colour(spriteColour[sel]),
       .squareData(BOMB_SPRITE_DATA),
       .cordinateIndex(cordinateIndex),
       .oledColour(bombSquareColour_1)
@@ -112,7 +113,7 @@ module drawCordinate (
 
   drawSquare #(8) bombSquare_2 (
       .tile_index(bomb_index_2),
-      .colour(BOMB_ORANGE),
+      .colour(BOMB_GREY),
       .squareData(BOMB_SPRITE_DATA),
       .cordinateIndex(cordinateIndex),
       .oledColour(bombSquareColour_2)
