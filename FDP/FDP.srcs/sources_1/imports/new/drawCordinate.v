@@ -7,6 +7,8 @@ module drawCordinate (
     input [95:0] wall_tiles,
     input [95:0] breakable_tiles,
     input [95:0] explosion_display,
+    input [2:0] user_direction,
+    input [2:0] bot_direction,
     input [95:0] powerup1_tiles,
     input [95:0] powerup2_tiles,
     input [95:0] powerup3_tiles,
@@ -14,8 +16,6 @@ module drawCordinate (
     input [95:0] powerup5_tiles,
     input [41:0] bomb_indices, 
     input [5:0] bomb_en,
-    input [2:0] user_direction,
-    input [2:0] bot_direction,
     input user_dead,
     input bot_dead,
     input [1:0] sel, //sprite selection
@@ -57,7 +57,11 @@ module drawCordinate (
 
   wire isWall = wall_tiles[tileIndex];
   wire isBreakable = breakable_tiles[tileIndex];
-  wire isPowerup = powerup_tiles[tileIndex];
+  wire isPowerup1 = powerup1_tiles[tileIndex];
+  wire isPowerup2 = powerup2_tiles[tileIndex];
+  wire isPowerup3 = powerup3_tiles[tileIndex];
+  wire isPowerup4 = powerup4_tiles[tileIndex];
+  wire isPowerup5 = powerup5_tiles[tileIndex];
   wire exploded = explosion_display[tileIndex];
   
   wire [5:0] tilePixelIndex = localY * TILE_WIDTH + localX;
@@ -65,7 +69,11 @@ module drawCordinate (
   // Determine active sprite pixel for wall and breakable using sprites data.
   wire wallActive = isWall && (WALL_SPRITE_DATA[tilePixelIndex]);
   wire brickActive = isBreakable && (BRICK_SPRITE_DATA[tilePixelIndex]);
-  wire powerupActive = isPowerup && (POWERUP_BOMBUP_SPRITE_DATA[tilePixelIndex]);
+  wire powerup1Active = isPowerup1 && (POWERUP_BOMBUP_SPRITE_DATA[tilePixelIndex]);
+  wire powerup2Active = isPowerup2 && (POWERUP_PUSH_SPRITE_DATA[tilePixelIndex]);
+  wire powerup3Active = isPowerup3 && (POWERUP_HEALTHUP_SPRITE_DATA[tilePixelIndex]);
+  wire powerup4Active = isPowerup4 && (POWERUP_REDUCETIMER_SPRITE_DATA[tilePixelIndex]);
+  wire powerup5Active = isPowerup5 && (POWERUP_BOMBRANGE_SPRITE_DATA[tilePixelIndex]);
   wire explodeActive = exploded && (EXPLOSION_TRAIL_SPRITE_DATA[tilePixelIndex]);
   
   // Extract bomb indices directly from the input
@@ -81,9 +89,12 @@ module drawCordinate (
   // Assign color based on tile type: bomb has highest priority.
   assign objectColour = ~wallActive & isWall ? WALL_COLOUR : 
                         ~brickActive & isBreakable ? BRICK_COLOUR : 
-                        ~powerupActive & isPowerup ? POWERUP_BACKGROUND_GREEN : 
-                        ~explodeActive & exploded ? EXPLOSION_ORANGE : 
-                        BLACK_COLOUR;
+                        ~powerup1Active & isPowerup1 ? POWERUP_BACKGROUND_GREEN : 
+                        ~powerup2Active & isPowerup2 ? POWERUP_BACKGROUND_GREEN : 
+                        ~powerup3Active & isPowerup3 ? POWERUP_BACKGROUND_GREEN : 
+                        ~powerup4Active & isPowerup4 ? POWERUP_BACKGROUND_GREEN : 
+                        ~powerup5Active & isPowerup5 ? POWERUP_BACKGROUND_GREEN : 
+                        ~explodeActive & exploded ? EXPLOSION_ORANGE : BLACK_COLOUR;
 
   //To let users choose which sprite to play with
   reg [63:0] spriteDataLeft [2:0];
@@ -104,18 +115,16 @@ module drawCordinate (
   // Instantiate drawSquare for user and bot blocks with index-based approach
   drawSquare #(8) userSquare (
       .tile_index(user_index),
-      .colour(user_dead == 1? TOMBSTONE_GREY : spriteColour[sel]),
-      .squareData(user_dead == 1? TOMBSTONE_SPRITE_DATA : 
-                 (user_direction == 1 || user_direction == 4)? spriteDataLeft[sel] : spriteDataRight[sel]),
+      .colour(spriteColour[sel]),
+      .squareData((user_direction == 1 || user_direction == 4)? spriteDataLeft[sel] : spriteDataRight[sel]),
       .cordinateIndex(cordinateIndex),
       .oledColour(userSquareColour)
   );
 
   drawSquare #(8) botSquare (
       .tile_index(bot_index),
-      .colour(user_dead == 1? TOMBSTONE_GREY : DINO_COLOUR),
-      .squareData(bot_dead == 1? TOMBSTONE_SPRITE_DATA : 
-                 (bot_direction == 1 || bot_direction == 4)? DINO_SPRITE_LEFT_DATA : DINO_SPRITE_RIGHT_DATA),
+      .colour(DINO_COLOUR),
+      .squareData((bot_direction == 1 || bot_direction == 4)? DINO_SPRITE_LEFT_DATA : DINO_SPRITE_RIGHT_DATA),
       .cordinateIndex(cordinateIndex),
       .oledColour(botSquareColour)
   );

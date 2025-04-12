@@ -86,7 +86,7 @@ module Map (
     wire [3:0] after_bot_health;
     wire [5:0] start_bomb;
     reg push_bomb_ability = 0;
-    bomb boom (clk,keyBOMB_posedge,en,push_bomb_ability,wall_tiles,breakable_tiles,bomb_indices[41:21],user_index,bot_index,player_health,bot_health,bomb_limit,bomb_range,bomb_time,after_break_tiles,explosion_display,bomb_tiles,health,after_bot_health,start_bomb);
+    bomb boom (clk,keyBOMB_posedge,en,push_bomb_ability,wall_tiles,breakable_tiles,bomb_indices[41:21],user_index,bot_index,player_health,bot_health,bomb_limit,bomb_range,bomb_time,after_break_tiles,explosion_display,bomb_tiles,health,after_bot_health,start_bomb, bombExploded);
 
   // Clock Divider for game timing
   slow_clock c1 (
@@ -135,11 +135,11 @@ module Map (
       .wall_tiles(wall_tiles),
       .breakable_tiles(after_break_tiles),
       .explosion_display(explosion_display),
-      .powerup_tiles(powerup1_tiles),
-      .powerup_tiles(powerup2_tiles),
-      .powerup_tiles(powerup3_tiles),
-      .powerup_tiles(powerup4_tiles),
-      .powerup_tiles(powerup5_tiles),
+      .powerup1_tiles(powerup1_tiles),
+      .powerup2_tiles(powerup2_tiles),
+      .powerup3_tiles(powerup3_tiles),
+      .powerup4_tiles(powerup4_tiles),
+      .powerup5_tiles(powerup5_tiles),
       .bomb_indices(bomb_indices),
       .bomb_en(bomb_en),
       .user_dead(player_health == 0 ? 1 : 0),

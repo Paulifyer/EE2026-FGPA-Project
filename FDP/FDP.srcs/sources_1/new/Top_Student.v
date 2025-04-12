@@ -43,7 +43,11 @@ module Top_Student (
   wire [15:0] oled_data, oled_game_map, oled_data_menu, oled_data_sprite;
   wire [95:0] wall_tiles;
   wire [95:0] breakable_tiles;
-  wire [95:0] powerup_tiles;
+  wire [95:0] powerup1_tiles;
+  wire [95:0] powerup2_tiles;
+  wire [95:0] powerup3_tiles;
+  wire [95:0] powerup4_tiles;
+  wire [95:0] powerup5_tiles;
   wire bombExploded;
   wire death;
 
@@ -189,11 +193,11 @@ module Top_Student (
       .bombs(led[15:13]),
       .health(led[3:0]),
       .breakable_tiles(breakable_tiles),
-      .powerup_tiles(powerup1_tiles),
-      .powerup_tiles(powerup2_tiles),
-      .powerup_tiles(powerup3_tiles),
-      .powerup_tiles(powerup4_tiles),
-      .powerup_tiles(powerup5_tiles),
+      .powerup1_tiles(powerup1_tiles),
+      .powerup2_tiles(powerup2_tiles),
+      .powerup3_tiles(powerup3_tiles),
+      .powerup4_tiles(powerup4_tiles),
+      .powerup5_tiles(powerup5_tiles),
       .pixel_data(oled_game_map)
   );
 
