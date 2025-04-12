@@ -65,7 +65,7 @@ module Map (
   // Clock Divider for game timing
   slow_clock c1 (
       .clk(clk),
-      .period(1_000_000),
+      .period(100_000_000),
       .slow_clock(clk1p0)
   );
 
