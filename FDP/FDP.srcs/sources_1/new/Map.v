@@ -7,6 +7,7 @@ module Map (
     keyLEFT,
     keyRIGHT,
     keyBOMB,
+    input [2:0] sw,//USING FOR p1 and p2 logic, sw0 will be used to turn on multiplayer setting, sw1 will be for p1, sw2 for p2
     input [3:0] state,
     input [1:0] sel, //to pick sprites for player
     input JAin, //for UARTRx
@@ -131,7 +132,7 @@ module Map (
     wire busy;
     UartTx send (clk, tx_start, rx_receiving, data, JAout, busy);
     
-  //UART RECEIVE (NOT IMPLEMENTED YET)
+    reg ready = 1'b0; //checks when acknowledge packet is received
     wire valid, isReceiving;
     wire [2:0] packetType;
     wire [12:0] dataReceived;
@@ -168,7 +169,7 @@ module Map (
   // Enemy AI movement controller
   enemy_movement enemy_move (
       .clk(clk1p0),
-      .en(en),
+      .en(en & ~sw[0]),
       .bot_index(bot_index),
       .user_index(user_index),
       .bomb_indices(bomb_indices),
@@ -201,6 +202,32 @@ module Map (
 
   // Input processing and bomb management (fast clock domain)
   always @(posedge clk) begin
+    if (ready == 1'b0) begin
+        case (sw) 
+            3'b011: begin //if master
+                if (!busy) begin //starts sending a master packet
+                    data <= {3'b111, 13'b1010101010101};
+                    tx_start <= 1;
+                end
+                if (valid && ({packetType, dataReceived} == 16'b1110101010101010)) begin //waits for an acknowledgement packet
+                    tx_start <= 0; //resets tx_start
+                    ready <= 1; //sets Master to ready
+                end
+            end 
+            3'b101: begin //if slave
+                if (valid && {packetType, dataReceived} == 16'b1111010101010101) begin //waits for a master packet
+                    if (!busy) begin //sends an acknowledge packet
+                        data <= 16'b1110101010101010;
+                        tx_start <= 1;
+                    end    
+                end else begin
+                    tx_start <= 0; //resets tx_start 
+                    ready <= 1; //sets Slave to ready
+                end
+            end
+        endcase
+    end
+  
     //Write Operation for Receive FIFO for Uart data to be written
     if (!fullR & valid) begin
         writeEnR <= 1;
@@ -235,10 +262,14 @@ module Map (
         bomb_indices[6:0] <= user_index; // Player bomb index
         bomb_en[0] <= 1;
         player_bombs_count <= player_bombs_count - 1;
+        //Write Operation for Send FIFO buffer to transmit bomb data
         if (!full) begin
             writeEn <= 1'b1;
             writeData <= {3'b001, 6'b000000, user_index};
-        end else writeEn <= 1'b0;
+            tx_start <= 1;
+        end else begin 
+            writeEn <= 1'b0;
+        end
       end
 
       // Handle enemy bomb placement
@@ -247,12 +278,14 @@ module Map (
         bomb_en[1] <= 1;
         enemy_bombs_count <= enemy_bombs_count - 1;
       end
-      //Read Operation of the FIFO Buffer to dequeue the buffer and send data to the Tx to transmit
+      //Read Operation of the Send FIFO Buffer to dequeue the buffer and send data to the Tx to transmit
       if (!empty && !busy) begin
         readEn <= 1'b1;
-        data = readData;
+        data <= readData;
+        tx_start <= 1;
       end else begin
         readEn <= 1'b0;
+        if (!busy) tx_start <= 0;
       end  
       
       // Reset bomb status when countdown reaches zero

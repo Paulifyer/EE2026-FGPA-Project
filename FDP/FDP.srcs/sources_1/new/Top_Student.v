@@ -18,7 +18,7 @@ module Top_Student (
     btnR,
     btnD,
     JAin,
-    input [15:0] sw,
+    input [15:0] sw, //USING FOR p1 and p2 logic, sw0 will be used to turn on multiplayer setting, sw1 will be for p1, sw2 for p2
     input PS2Data,
     input PS2Clk,
     output [7:0] JB,
