@@ -67,33 +67,16 @@ module Map (
   // Random number generation
   reg [15:0] random_seed;
 
-  reg [95:0] after_powerup_tiles;
-  wire [20:0] bomb_tiles;
-  wire [95:0] after_break_tiles, explosion_display;
-  reg [2:0] bomb_limit = 1, bomb_range = 1;
-  reg [13:0] bomb_time = 10000;
-  reg [3:0] player_health = 4'b1111;
-  wire [5:0] start_bomb;
-  reg push_bomb_ability = 0;
-  bomb boom (
-      clk,
-      keyBOMB_posedge,
-      en,
-      push_bomb_ability,
-      wall_tiles,
-      breakable_tiles,
-      bomb_indices[41:21],
-      user_index,
-      player_health,
-      bomb_limit,
-      bomb_range,
-      bomb_time,
-      after_break_tiles,
-      explosion_display,
-      bomb_tiles,
-      health,
-      start_bomb
-  );
+    reg [95:0] after_powerup_tiles;
+    wire [20:0] bomb_tiles;
+    wire [95:0] after_break_tiles, explosion_display;
+    reg [2:0] bomb_limit = 1, bomb_range = 1;
+    reg [13:0] bomb_time = 10000;
+    reg [3:0] player_health = 4'b1111, bot_health = 4'b1111;
+    wire [3:0] after_bot_health;
+    wire [5:0] start_bomb;
+    reg push_bomb_ability = 0;
+    bomb boom (clk,keyBOMB_posedge,en,push_bomb_ability,wall_tiles,breakable_tiles,bomb_indices[41:21],user_index,bot_index,player_health,bot_health,bomb_limit,bomb_range,bomb_time,after_break_tiles,explosion_display,bomb_tiles,health,after_bot_health,start_bomb);
 
   // Clock Divider for game timing
   slow_clock c1 (
