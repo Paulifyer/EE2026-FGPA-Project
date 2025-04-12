@@ -9,7 +9,6 @@ module enemy_movement (
     input [5:0] bomb_en,        // Updated to handle up to 6 bombs
     input [95:0] wall_tiles,
     input [95:0] breakable_tiles,
-    input [95:0] powerup_tiles,
     input [15:0] random_number,
     output reg dropBomb,
     output reg [2:0] direction
