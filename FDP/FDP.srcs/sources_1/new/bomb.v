@@ -7,7 +7,9 @@ module bomb(
     input [95:0] wall_tiles, breakable_tiles,
     input [20:0] other_position_bomb_i, /* Other players bomb */
     input [6:0] player_index,
+    bot_index,
     input [3:0] player_health,
+    bot_health,
     bomb_limit,  /* Number of bomb that can be place simultaneously */
     bomb_range,  /* Bomb explosion radius in 12x8 grid measurement */
     input [13:0] bomb_time,  /* Time taken for bomb to explode in milisecond */
@@ -15,6 +17,7 @@ module bomb(
     output reg [95:0] explosion_display,
     output [20:0] position_bomb_o,
     output reg [3:0] after_player_health,
+                     after_bot_health,
     output reg [5:0] start_bomb = 0  /* To enable countdown for bomb */
 );
 
@@ -31,7 +34,7 @@ module bomb(
       previous_player_index = player_index;
   wire [2:0] explode_bomb, e_explode_bomb;  /* Signal bomb exploded */
   reg [25:0] explosion_display_count = 0;
-  reg bomb_dmg_once = 0;
+  reg bomb_dmg_once = 0, b_bomb_dmg_once = 0;
   /* Reg to store calculation */
   reg player_not_on_bomb;
   reg [3:0] bomb_index_y;
@@ -133,10 +136,14 @@ module bomb(
       if (bomb_dmg_once == 0 && explosion_display[player_index] == 1) begin
         bomb_dmg_once <= 1;
         after_player_health <= after_player_health >> 1;
+      if (b_bomb_dmg_once == 0 && explosion_display[bot_index] == 1) begin
+          b_bomb_dmg_once <= 1;
+          after_bot_health <= after_bot_health >> 1;
       end else if (explosion_display_count == 50000000) begin
         explosion_display <= 0;
         explosion_display_count <= 0;
         bomb_dmg_once <= 0;
+        b_bomb_dmg_once <= 1;
         position_bomb[0] <= start_bomb[0] ? position_bomb[0] : 127;
         position_bomb[1] <= start_bomb[1] ? position_bomb[1] : 127;
         position_bomb[2] <= start_bomb[2] ? position_bomb[2] : 127;
