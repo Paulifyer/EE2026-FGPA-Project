@@ -100,7 +100,7 @@ module Top_Student (
   song_top sound (
       clk,
       keyBOMB, keyUP, keyLEFT, keyRIGHT, keyDOWN,
-      bombExploded, death, ~state,
+      bombExploded, death, state == 0,
       speaker
   );
 
@@ -145,8 +145,8 @@ module Top_Student (
   SpriteMenu sprMnu (
     .pixel_index(pixel_index),
     .state(state),
-    .btnL(btnL),
-    .btnR(btnR),
+    .btnL(keyLEFT),
+    .btnR(keyRIGHT),
     .clk(clk),
     .oled_data(oled_data_sprite),
     .sel(sel)

@@ -382,7 +382,9 @@ module time_bomb_explosion (
   reg [13:0] count = 0;
   always @(posedge clk) begin
     bomb_exploded <= (count == bomb_time);
-    if (!start) count <= 0;
+    if (!start) begin 
+        count <= 0;
+    end
     else count <= count + (count < bomb_time);
   end
 endmodule
