@@ -96,6 +96,8 @@ module Map (
       .wall_tiles(wall_tiles),
       .breakable_tiles(breakable_tiles),
       .powerup_tiles(powerup_tiles),
+      .user_direction(user_move),
+      .bot_direction(bot_move_wire),
       .bomb_indices(bomb_indices),
       .bomb_en(bomb_en),
       .sel(sel),

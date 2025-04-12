@@ -128,19 +128,22 @@ module song_top(
             "idle" : begin
                 counter_clear <= 1'b1;
                 if(w_play_U) begin
-                    state <= "n1"; // STARWARS
+//                    state <= "n1"; // STARWARS [MENU]
+                    state <= "PU0"; // POWERUPS and BUTTON PRESS
                 end 
                 else if(w_play_D) begin
-                    state <= "BGM0"; // MENU MUSIC
+//                    state <= "BGM0"; // MENU MUSIC and DEATH
+                    state <= "PU0"; // POWERUPS and BUTTON PRESS
                 end    
                 else if(w_play_L) begin
-                    state <= "PU0"; // POWERUPS
+                    state <= "PU0"; // POWERUPS and BUTTON PRESS
                 end    
                 else if(w_play_R) begin
-                    state <= "ex0"; // EXPLOSION
+//                    state <= "ex0"; // EXPLOSION
+                    state <= "PU0"; // POWERUPS and BUTTON PRESS
                 end    
                 else if(w_play_C) begin
-                    state <= "sel0"; // SELECT SOUND
+                    state <= "sel0"; // SELECT SOUND and DROP BOMB
                 end    
                 
             end
