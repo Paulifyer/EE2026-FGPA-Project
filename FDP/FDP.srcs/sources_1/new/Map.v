@@ -7,7 +7,8 @@ module Map (
     btnL,
     btnR,
     btnC,
-    en,
+    input [3:0] state,
+    input [1:0] sel, //to pick sprites for player
     input JAin, //for UARTRx
     input [12:0] pixel_index,
     input [95:0] wall_tiles,
@@ -54,13 +55,15 @@ module Map (
   reg btnC_prev, btnC_enemy_prev;
   wire btnC_posedge, btnC_enemy_posedge;
   wire btnC_enemy;
-
+   
   // State tracking to prevent accidental bomb placement on first enable
   reg module_was_enabled = 0;
   reg first_enable_btnC_pressed = 0;
 
   // Random number generation
   reg [15:0] random_seed;
+  
+  wire en; //enable wire
 
   // Clock Divider for game timing
   slow_clock c1 (
@@ -76,6 +79,8 @@ module Map (
       .btn(btnC),
       .btn_state(btnC_debounced)
   );
+  
+  assign en = (state == 2);
 
   // Button edge detection logic
   assign btnC_posedge = btnC_debounced & ~btnC_prev;
@@ -90,6 +95,7 @@ module Map (
       .breakable_tiles(breakable_tiles),
       .bomb_indices(bomb_indices),
       .bomb_en(bomb_en),
+      .sel(sel),
       .oledColour(pixel_data)
   );
 

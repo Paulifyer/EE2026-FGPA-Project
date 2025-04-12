@@ -34,10 +34,10 @@ module Top_Student (
 
   wire clk_6p25MHz, clk_1ms, segClk;
   wire clkOneSec;
-  wire state;  //Ethan : stuff for the menu
+  wire [3:0] state;  //Ethan : stuff for the menu
   wire frame_begin, sending_pixels, sample_pixel;
   wire [12:0] pixel_index;
-  wire [15:0] oled_data, oled_game_map, oled_data_menu;
+  wire [15:0] oled_data, oled_game_map, oled_data_menu, oled_data_sprite;
   wire [95:0] wall_tiles;
   wire [95:0] breakable_tiles;
 
@@ -91,9 +91,9 @@ module Top_Student (
   );
 
   StateManager sM (
-      (btnC | key_ENTER),
-      clk,
-      state
+      .btnC(btnC | key_ENTER),
+      .clk(clk),
+      .state(state)
   );
 
   MainMenu menu (
@@ -102,6 +102,20 @@ module Top_Student (
       state,
       oled_data_menu
   );
+  
+  wire [1:0] sel;
+  //THIS MENU NEEDS A WAY TO TELL THE OTHER MODULES TO CHANGE 
+  //THE SPRITE OF THE PLAYER
+  SpriteMenu sprMnu (
+    .pixel_index(pixel_index),
+    .state(state),
+    .btnL(btnL),
+    .btnR(btnR),
+    .clk(clk),
+    .oled_data(oled_data_sprite),
+    .sel(sel)
+  );
+  
 
 
   Oled_Display d1 (
@@ -134,7 +148,8 @@ module Top_Student (
       .btnL(btnL | key_A),
       .btnR(btnR | key_D),
       .btnC(btnC | key_B),
-      .en(state),
+      .state(state),
+      .sel(sel),
       .JAin(JAin),
       .pixel_index(pixel_index),
       .wall_tiles(wall_tiles),
@@ -158,6 +173,8 @@ module Top_Student (
   );
 
 
-  assign oled_data = (!state) ? oled_data_menu : oled_game_map;
+  assign oled_data = (state == 0) ? oled_data_menu :
+                     (state == 1) ? oled_data_sprite :
+                     oled_game_map;
 
 endmodule

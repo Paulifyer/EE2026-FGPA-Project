@@ -2,7 +2,8 @@
 
 module MainMenu(
     input [12:0] pixel_index,
-    input halfSecClock, state,
+    input halfSecClock,
+    input [3:0] state,
     output reg [15:0] oled_data
     );
     wire [7:0] X; wire [7:0] Y;
@@ -78,7 +79,7 @@ module MainMenu(
         
     end
     always @ (pixel_index, X, Y) begin
-        if (~state) begin
+        if (state == 0) begin
             if ((X >= 24 && X <= 26 && Y >= 45 && Y <= 59) ||
                 (X >= 24 && X <= 46 && Y >= 60 && Y <= 62) ||
                 (X >= 49 && X <= 72 && Y >= 45 && Y <= 47) ||

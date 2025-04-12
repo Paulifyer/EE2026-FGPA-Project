@@ -2,7 +2,7 @@
 
 module Score_Tracker(
     input clk_1s,
-    input en,
+    input [3:0] en,
     output reg [15:0] score
     );
 
@@ -12,7 +12,7 @@ module Score_Tracker(
     
     always @(posedge clk_1s)
     begin
-        if(en) begin
+        if(en == 2) begin
             score <= score + 1;
         end
     end
