@@ -15,7 +15,7 @@ module Map (
     output JAout,  //for UARTTx
     input [95:0] breakable_tiles,
     input [95:0] powerup_tiles,
-    output [3:0] bombs,
+    output [2:0] bombs,
     output [3:0] health,
     output [15:0] pixel_data,
     wire bombExploded,
@@ -327,7 +327,7 @@ module Map (
   end
 
   // Bomb count indicator for LEDs
-  assign bombs = ~((((3'b111 >> start_bomb[2]) >> start_bomb[1]) >> start_bomb[0]));
+  assign bombs = (((3'b111 << start_bomb[2]) << start_bomb[1]) << start_bomb[0]) << (3-bomb_limit);
 
   assign death = player_health == 0 ? 1 : 0;
 //  assign health = 4'b0111;

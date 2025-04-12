@@ -5,7 +5,7 @@ import Data_Item::*;
 module bomb(
     input clk, btnC_state, en, push_bomb_ability,
     input [95:0] wall_tiles, breakable_tiles,
-    input [6:0][2:0] other_position_bomb_i, /* Other players bomb */
+    input [20:0] other_position_bomb_i, /* Other players bomb */
     input [6:0] player_index,
     input [3:0] player_health,
     bomb_limit, /* Number of bomb that can be place simultaneously */
@@ -13,7 +13,7 @@ module bomb(
     input [13:0] bomb_time, /* Time taken for bomb to explode in milisecond */
     output reg [95:0] after_break_tiles,
     output reg [95:0] explosion_display,
-    output [6:0][2:0] position_bomb_o,
+    output [20:0] position_bomb_o,
     output reg [3:0] after_player_health,
     output reg [5:0] start_bomb = 0, /* To enable countdown for bomb */
     output reg bombExploded = 0
