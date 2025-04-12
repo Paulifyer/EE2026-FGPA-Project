@@ -42,6 +42,7 @@ module Top_Student (
   wire [95:0] breakable_tiles;
 
   reg  [15:0] score;
+  wire is_high_score;
   reg  [ 7:0] current_key;
 
   //   assign led = current_key;
@@ -94,6 +95,7 @@ module Top_Student (
   Score_Display s1 (
       clk_1ms,
       score,
+      is_high_score,
       seg,
       an
   );
@@ -132,7 +134,9 @@ module Top_Student (
   Score_Tracker scoreTrack (
       clkOneSec,
       state,
-      score
+      key_ENTER,
+      score,
+      is_high_score
   );
 
   Map map (
@@ -156,10 +160,11 @@ module Top_Student (
       .clk(clk),
       .pixel_data(oled_data),
       .score(score),
+      .is_high_score(is_high_score),
       .pixel_index(pixel_index),
+      .bombs(led[15:12]),
       .hsync(hsync),
       .vsync(vsync),
-      .bombs(led[15:12]),
       .rgb(rgb)
   );
 

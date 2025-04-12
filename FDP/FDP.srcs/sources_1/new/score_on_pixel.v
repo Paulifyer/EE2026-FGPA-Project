@@ -9,8 +9,9 @@ module ScoreDisplay #(
     input [3:0] s1,
     input [3:0] s2,
     input [3:0] s3,
+    input is_high_score,  // Input to indicate high score
     output reg in_score_region,
-    output reg pixel_on
+    output reg [11:0] pixel_color  // Output color directly
 );
 
   parameter CHAR_WIDTH = 8;  // ASCII character width
@@ -22,7 +23,17 @@ module ScoreDisplay #(
   parameter SCREEN_WIDTH = 640;  // Total screen width
   parameter SCREEN_HEIGHT = 480;  // Total screen height
   parameter SCORE_REGION_WIDTH = TOTAL_CHARS * CHAR_STRIDE;
-
+  
+  // Color constants for high score indication
+  parameter [11:0] COLOR_WHITE = 12'hFFF;
+  parameter [11:0] COLOR_GOLD = 12'hFD0;   // Gold/yellow for high score
+  parameter [11:0] COLOR_BLACK = 12'h000;  // Black/transparent
+  
+  // High score effects
+  reg [3:0] highlight_counter = 0;
+  reg [23:0] effect_timer = 0;
+  parameter EFFECT_SPEED = 24'd10000000;  // Controls speed of the highlight effect
+  
   // Pre-calculate constants for efficiency
   localparam EFFECTIVE_CHAR_WIDTH = CHAR_WIDTH << SCORE_SCALE_2N;
   localparam EFFECTIVE_CHAR_HEIGHT = CHAR_HEIGHT << SCORE_SCALE_2N;
@@ -55,8 +66,25 @@ module ScoreDisplay #(
   reg         in_char_area_stage2;
   reg  [10:0] rom_addr_stage2;
 
+  // High score visual effect - moving highlight across digits
+  always @(posedge clk) begin
+    if (is_high_score) begin
+      if (effect_timer >= EFFECT_SPEED) begin
+        effect_timer <= 0;
+        if (highlight_counter >= TOTAL_CHARS - 1)
+          highlight_counter <= 0;
+        else
+          highlight_counter <= highlight_counter + 1;
+      end else begin
+        effect_timer <= effect_timer + 1;
+      end
+    end else begin
+      highlight_counter <= 0;
+      effect_timer <= 0;
+    end
+  end
+
   // Instantiate ASCII ROM
-  wire [ 7:0] rom_data;
   ascii_rom rom (
       .clk (clk),
       .addr(rom_addr_stage2),
@@ -65,13 +93,15 @@ module ScoreDisplay #(
 
   // Stage 1: Region detection and coordinate calculation
   always @(posedge clk) begin
-    stage1_in_region  <= (x_in < SCREEN_WIDTH) && (y_in < SCREEN_HEIGHT) &&
-                           (y_in >= SCORE_VOFFSET) && 
-                           (y_in < SCORE_VOFFSET + EFFECTIVE_CHAR_HEIGHT) &&
-                           (x_in >= SCORE_HOFFSET) && 
-                           (x_in < SCORE_HOFFSET + SCORE_REGION_WIDTH);
-    x_pos_stage1 <= x_in - SCORE_HOFFSET;
+    // Normal (non-animated) display
+    stage1_in_region <= (x_in < SCREEN_WIDTH) && (y_in < SCREEN_HEIGHT) &&
+                      (y_in >= SCORE_VOFFSET) && 
+                      (y_in < SCORE_VOFFSET + EFFECTIVE_CHAR_HEIGHT) &&
+                      (x_in >= SCORE_HOFFSET) && 
+                      (x_in < SCORE_HOFFSET + SCORE_REGION_WIDTH);
     y_pos_stage1 <= y_in - SCORE_VOFFSET;
+    
+    x_pos_stage1 <= x_in - SCORE_HOFFSET;
     digit_index_stage1 <= (x_in - SCORE_HOFFSET) >> SHIFT;
     rem_x_stage1 <= (x_in - SCORE_HOFFSET) & (CHAR_STRIDE - 1);
     in_score_region <= stage1_in_region;
@@ -91,6 +121,7 @@ module ScoreDisplay #(
            default: char_code_stage2 <= 0;
         endcase
       end else begin
+        // Use current score values
         case (digit_index_stage1 - PREFIX_LENGTH)
            4'd0: char_value_stage2 <= s3;
            4'd1: char_value_stage2 <= s2;
@@ -107,10 +138,18 @@ module ScoreDisplay #(
     end
   end
 
-  // Stage 3: Generate pixel output based on ROM data
+  // Stage 3: Generate pixel output based on ROM data with color
   always @(posedge clk) begin
-    if (stage1_in_region && in_char_area_stage2 && (bit_pos_stage2 < CHAR_WIDTH))
-      pixel_on <= rom_data[7-bit_pos_stage2];
-    else pixel_on <= 0;
+    if (stage1_in_region && in_char_area_stage2 && (bit_pos_stage2 < CHAR_WIDTH) && rom_data[7-bit_pos_stage2]) begin
+      if (is_high_score) begin
+        // For high score, determine if this digit should be highlighted
+        if (digit_index_stage1 == highlight_counter)
+          pixel_color <= COLOR_GOLD;  // Highlight current digit
+        else
+          pixel_color <= COLOR_WHITE; // Normal color for other digits
+      end else
+        pixel_color <= COLOR_WHITE;   // White for normal score
+    end else
+      pixel_color <= COLOR_BLACK;     // Black/transparent
   end
 endmodule

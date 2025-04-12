@@ -4,10 +4,11 @@ module OLED_to_VGA (
     input clk,
     input [15:0] pixel_data,
     input [15:0] score,
+    input is_high_score,
     input [12:0] pixel_index,
     input [3:0] bombs,  // 4 bits representing up to 4 bombs (1111 = 4 bombs, 0111 = 3 bombs, etc.)
     output hsync,
-    vsync,
+    output vsync,
     output reg [11:0] rgb
 );
 
@@ -108,7 +109,8 @@ module OLED_to_VGA (
   // Define score display parameters
   parameter SCORE_VOFFSET = 370;
   parameter SCORE_HOFFSET = 125;
-  wire score_pixel_active;
+  wire [11:0] score_pixel_color;  // Changed to receive color from ScoreDisplay
+  wire in_score_region;
 
   // Define bomb display parameters
   parameter BOMB_VOFFSET = 400;
@@ -119,6 +121,7 @@ module OLED_to_VGA (
   parameter HEALTH_VOFFSET = 440;
   parameter HEALTH_HOFFSET = 125;
   wire health_pixel_active;
+
   wire [3:0] player_health = 4'b0111;
 
   // Instantiate the score module with custom offsets:
@@ -133,7 +136,9 @@ module OLED_to_VGA (
       .s1      (digit1),
       .s2      (digit2),
       .s3      (digit3),
-      .pixel_on(score_pixel_active)
+      .is_high_score(is_high_score),
+      .in_score_region(in_score_region),
+      .pixel_color(score_pixel_color)  // Get color directly from ScoreDisplay
   );
 
   // Instantiate the sprite display module for bombs
@@ -148,7 +153,6 @@ module OLED_to_VGA (
       .sprite_data(BOMB_SPRITE_DATA),  // Pass the bomb sprite data to the display module
       .pixel_on(bomb_pixel_active)
   );
-
 
   // Instantiate the sprite display module for health
   SpriteCountDisplay #(
@@ -171,7 +175,7 @@ module OLED_to_VGA (
     if (~video_on) rgb <= COLOUR_BLACK;
     else if (is_in_display_area) rgb <= frame_buff_data;
     else if (is_in_border) rgb <= COLOUR_WHITE;
-    else if (score_pixel_active) rgb <= COLOUR_WHITE;
+    else if (in_score_region) rgb <= score_pixel_color; // Use color from ScoreDisplay directly
     else if (bomb_pixel_active) rgb <= converted_bomb_color;
     else if (health_pixel_active) rgb <= converted_heart_color;
     else rgb <= COLOUR_BLACK;
