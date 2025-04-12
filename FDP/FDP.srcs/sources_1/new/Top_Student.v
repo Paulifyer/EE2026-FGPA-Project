@@ -123,8 +123,8 @@ module Top_Student (
   SpriteMenu sprMnu (
     .pixel_index(pixel_index),
     .state(state),
-    .btnL(btnL),
-    .btnR(btnR),
+    .btnL(keyLEFT),
+    .btnR(keyRIGHT),
     .clk(clk),
     .oled_data(oled_data_sprite),
     .sel(sel)

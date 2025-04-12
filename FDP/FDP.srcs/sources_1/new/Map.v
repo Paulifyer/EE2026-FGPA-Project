@@ -131,7 +131,7 @@ module Map (
     wire busy;
     UartTx send (clk, tx_start, rx_receiving, data, JAout, busy);
     
-  //UART RECEIVE
+  //UART RECEIVE (NOT IMPLEMENTED YET)
     wire valid, isReceiving;
     wire [2:0] packetType;
     wire [12:0] dataReceived;
@@ -148,11 +148,22 @@ module Map (
     reg readEn, writeEn; //enables read and write resp.
     reg [15:0] writeData; //data written into the buffer
     wire empty, full; //check if empty or full
-    wire [15:0] readData; //data written from the buffer
+    wire [15:0] readData; //data read from the buffer
     FIFOReg txBuffer (readEn, writeEn, clk, writeData, empty, full, readData);
    
+    //Receive Buffer (FIFO)
+    reg readEnR, writeEnR; //enables read and write resp.
+    reg [15:0] writeDataR; //data written into the buffer
+    wire emptyR, fullR; //check if empty or full
+    wire [15:0] readDataR; //data read from the buffer
+    FIFOReg rxBuffer (readEnR, writeEnR, clk, writeDataR, emptyR, fullR, readDataR);
     
-    
+    //Parses Packets from the FIFO
+    wire pBusy;
+    wire [2:0] pType;
+    wire [12:0] pData;
+    reg [15:0] inputPacket;
+    PacketParser pp (inputPacket, clk, pBusy, pType, pData);
 
   // Enemy AI movement controller
   enemy_movement enemy_move (
@@ -190,6 +201,19 @@ module Map (
 
   // Input processing and bomb management (fast clock domain)
   always @(posedge clk) begin
+    //Write Operation for Receive FIFO for Uart data to be written
+    if (!fullR & valid) begin
+        writeEnR <= 1;
+        writeDataR = {packetType, dataReceived};
+    end else writeEnR <= 0;
+    
+    //Read Operation for Receive FIFO for data to be parsed
+    // Returns: pType: the type of packet received
+    //          pData: the data of the packet
+    if (!emptyR & !pBusy) begin
+        readEnR <= 1;
+        inputPacket = readData;
+    end else readEnR <= 0;
     if (en) begin
       keyBOMB_prev <= keyBOMB_debounced;
       keyBOMB_enemy_prev <= keyBOMB_enemy;
@@ -205,12 +229,16 @@ module Map (
         // Reset the flag once the initial button press is released
         first_enable_keyBOMB_pressed <= 0;
       end
-
+      
       // Handle player bomb placement
       if (dropBomb) begin
         bomb_indices[6:0] <= user_index; // Player bomb index
         bomb_en[0] <= 1;
         player_bombs_count <= player_bombs_count - 1;
+        if (!full) begin
+            writeEn <= 1'b1;
+            writeData <= {3'b001, 6'b000000, user_index};
+        end else writeEn <= 1'b0;
       end
 
       // Handle enemy bomb placement
@@ -219,6 +247,7 @@ module Map (
         bomb_en[1] <= 1;
         enemy_bombs_count <= enemy_bombs_count - 1;
       end
+      //Read Operation of the FIFO Buffer to dequeue the buffer and send data to the Tx to transmit
       if (!empty && !busy) begin
         readEn <= 1'b1;
         data = readData;
@@ -248,7 +277,7 @@ module Map (
     
     // Checks if new location will be updated and FIFO is full, then starts a write operation into FIFO
     if (user_index != new_user_index & !full) begin
-        writeData <= {3'b000, 3'b000, new_user_index};
+        writeData <= {3'b000, 6'b000000, new_user_index};
         writeEn <= 1'b1;
     end else writeEn <= 1'b0;
     // Update player positions using indices
