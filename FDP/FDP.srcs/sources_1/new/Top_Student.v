@@ -170,7 +170,7 @@ module Top_Student (
       .pixel_index(pixel_index),
       .wall_tiles(wall_tiles),
       .JAout(JAout),
-      .bombs(led[15:12]),
+      .bombs(led[15:13]),
       .health(led[3:0]),
       .breakable_tiles(breakable_tiles),
       .powerup_tiles(powerup_tiles),
