@@ -8,7 +8,7 @@ module drawCordinate (
     input [95:0] breakable_tiles,
     input [95:0] explosion_display,
     input [95:0] powerup_tiles,
-    input [13:0] bomb_indices,
+    input [40:0] bomb_indices,
     input [1:0] bomb_en,
     input [1:0] sel, //sprite selection
     output [15:0] oledColour
@@ -56,8 +56,8 @@ module drawCordinate (
   wire powerupActive = isPowerup && (POWERUP_BOMBUP_SPRITE_DATA[tilePixelIndex]);
   
   // Extract bomb indices directly from the input
-  wire [6:0] bomb_index_1 = bomb_indices[6:0];
-  wire [6:0] bomb_index_2 = bomb_indices[13:7];
+  wire [20:0] bomb_index_1 = bomb_indices[20:0];
+  wire [20:0] bomb_index_2 = bomb_indices[41:21];
   
 //  reg userFaceDirection;
 //  reg botFaceDirection;
